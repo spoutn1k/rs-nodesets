@@ -2,6 +2,12 @@
 name = "nodeset"
 version = "0.1.0"
 edition = "2021"
+authors = ["Olivier Delhomme <olivier.delhomme@free.fr>"]
+description = "NodeSet management library"
+repository = "https://gitlab.com/delhomme/nodeset/"
+license = "GPL-3.0-or-later"
+keywords = ["nodeset", "node", "set", "group", "cluster"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

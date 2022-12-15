@@ -46,10 +46,12 @@ fn print_range(range_str: &str) {
             exit(1);
         }
     };
+    println!("Range: {}", range_str);
     println!("Range: {}", range);
     println!("Range: {:?}", range);
+
     for i in range {
-        println!("{}", i.to_string());
+        println!("{}", i);
     }
 }
 
@@ -61,7 +63,7 @@ fn print_rangeset(rangeset_str: &str) {
             exit(1);
         }
     };
-
+    println!("RangeSet: {}", rangeset_str);
     println!("RangeSet: {}", rangeset);
     println!("RangeSet: {:?}", rangeset);
 
