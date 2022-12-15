@@ -44,7 +44,7 @@ pub struct RangeSet {
 }
 
 impl RangeSet {
-    /// "[1-5/2]" or "[1,3-5,89]" or "[9-15/3]"
+    /// "[1-5/2]" or "[1,3-5,89]" or "[9-15/3,4,9-2]"
     pub fn new(strange: &str) -> Result<RangeSet, Box<dyn Error>> {
         let mut set: Vec<Range> = Vec::new();
         let rangeset: Vec<&str> = strange.split(",").collect();
@@ -59,8 +59,16 @@ impl RangeSet {
         }
         Ok(RangeSet { set, curr })
     }
+    pub fn empty() -> RangeSet {
+        let set: Vec<Range> = Vec::new();
+        let curr = 0;
+
+        RangeSet { set, curr }
+    }
 }
 
+
+/// RangeSet iterator returns an already padded String as Range does.
 impl Iterator for RangeSet {
     type Item = String;
 
@@ -86,7 +94,7 @@ impl Iterator for RangeSet {
     }
 }
 
-/// Display trait for RangeSet. It will display the range in a folded way
+/// Display trait for RangeSet. It will display the RangeSet in a folded way
 impl fmt::Display for RangeSet {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut to_display = String::new();

@@ -1,6 +1,6 @@
 /* -*- coding: utf8 -*-
  *
- *  lib.rs: Implements all structure logic to deal with nodesets
+ *  nodeset.rs: a binary to do some basic tests while developing
  *
  *  (C) Copyright 2022 Olivier Delhomme
  *  e-mail : olivier.delhomme@free.fr
@@ -22,6 +22,7 @@
 
 use nodeset::range::Range;
 use nodeset::rangeset::RangeSet;
+use nodeset::node::Node;
 use std::process::exit;
 
 /// rack[10-49]node[1-25/2,78-89,101,1001].panel[0-30/4]
@@ -77,5 +78,13 @@ fn main() {
     print_range("42-38");
     print_rangeset("1,3-5,89");
     print_rangeset("9-2,101,2-8/2");
-    print_rangeset("9-2,101,2-8/2");
+    print_rangeset("10-1/2,32-72/4");
+    let node = match Node::new("node[1-10,7-12/2]") {
+        Ok(n) => n,
+        Err(e) => {
+            println!("Error: {}", e);
+            exit(1);
+        }
+    };
+    println!("Node: {:?}", node);
 }

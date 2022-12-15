@@ -85,6 +85,7 @@ impl Range {
     }
 }
 
+/// Range iterator returns an already padded String.
 impl Iterator for Range {
     type Item = String;
 

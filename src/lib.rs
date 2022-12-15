@@ -1,6 +1,6 @@
 /* -*- coding: utf8 -*-
  *
- *  lib.rs: Implements all structure logic to deal with nodesets
+ *  lib.rs: Implements all structure logic to deal with NodeSets
  *
  *  (C) Copyright 2022 Olivier Delhomme
  *  e-mail : olivier.delhomme@free.fr
@@ -22,4 +22,4 @@
 
 pub mod range;
 pub mod rangeset;
-
+pub mod node;
