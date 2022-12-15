@@ -20,11 +20,8 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-mod range;
-mod rangeset;
-
-use crate::range::Range;
-use crate::rangeset::RangeSet;
+use nodeset::range::Range;
+use nodeset::rangeset::RangeSet;
 use std::process::exit;
 
 /// rack[10-49]node[1-25/2,78-89,101,1001].panel[0-30/4]
