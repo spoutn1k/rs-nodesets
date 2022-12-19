@@ -44,6 +44,12 @@ pub struct RangeSet {
 }
 
 impl RangeSet {
+
+    /// True when we only have one member: node003
+    pub fn is_alone(&self) -> bool {
+        self.set.len() == 1 && self.set[0].start_is_end() && self.set[0].step_is_one()
+    }
+
     /// "[1-5/2]" or "[1,3-5,89]" or "[9-15/3,4,9-2]"
     pub fn new(strange: &str) -> Result<RangeSet, Box<dyn Error>> {
         let mut set: Vec<Range> = Vec::new();

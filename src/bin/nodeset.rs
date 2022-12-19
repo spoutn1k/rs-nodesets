@@ -70,6 +70,23 @@ fn print_rangeset(rangeset_str: &str) {
     }
 }
 
+fn print_node(node_str: &str) {
+    let node = match Node::new(node_str) {
+        Ok(n) => n,
+        Err(e) => {
+            println!("Error: {}", e);
+            exit(1);
+        }
+    };
+    println!("Node: {}", node_str);
+    println!("Node: {}", node);
+    println!("Node: {:?}", node);
+
+    for n in node {
+        println!("{}", n);
+    }
+}
+
 fn main() {
     print_range("1-14/4");
     print_range("38-42");
@@ -79,12 +96,8 @@ fn main() {
     print_rangeset("1,3-5,89");
     print_rangeset("9-2,101,2-8/2");
     print_rangeset("10-1/2,32-72/4");
-    let node = match Node::new("node[1-10,7-12/2]") {
-        Ok(n) => n,
-        Err(e) => {
-            println!("Error: {}", e);
-            exit(1);
-        }
-    };
-    println!("Node: {:?}", node);
+    print_rangeset("1-10,7-12/2");
+    print_node("node[1-10,7-12/2]");
+    print_node("node001");
+    print_node("node[1-2]");
 }

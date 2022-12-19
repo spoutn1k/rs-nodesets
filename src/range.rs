@@ -52,6 +52,15 @@ pub struct Range {
 }
 
 impl Range {
+
+    pub fn start_is_end(&self) -> bool {
+        self.start == self.end
+    }
+
+    pub fn step_is_one(&self) -> bool {
+        self.step == 1
+    }
+
     /// "1-5/2" or "1" or "9-15"
     pub fn new(strange: &str) -> Result<Range, Box<dyn Error>> {
         /* Try to figure out if we have a base/step formatted range */

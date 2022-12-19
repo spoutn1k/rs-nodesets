@@ -22,6 +22,9 @@
 
 use crate::rangeset::RangeSet;
 use std::error::Error;
+use std::fmt;
+use regex::Regex;
+use lazy_static::lazy_static;
 
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct Node {
@@ -29,22 +32,121 @@ pub struct Node {
     set: RangeSet,
 }
 
-impl Node {
-    /* Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-64/2]" */
-    pub fn new(str: &str) -> Result<Node, Box<dyn Error>> {
-        let mut set = RangeSet::empty();
-        let splitted: Vec<&str> = str.split_terminator(|c| c == '[' || c == ']').collect();
-        let mut i = 1;
-        let mut name: String = format!("");
+#[derive(Debug)]
+pub enum NodeErrorType {
+    Regular(ErrorKind)
+}
 
-        for range in splitted {
-            if i % 2 == 0 {
-                set = RangeSet::new(range)?;
-            } else {
-                name = format!("{}", range);
-            }
-            i = i + 1 ;
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum ErrorKind {
+        RegexNoMatch,
+        RegexNotTwoMatch,
+ }
+
+
+impl ErrorKind {
+    fn as_str(&self) -> &str {
+        match *self {
+            ErrorKind::RegexNoMatch => "no match found in string",
+            ErrorKind::RegexNotTwoMatch => "did not match exactly two groups"
         }
-        Ok(Node { name, set })
     }
 }
+
+
+impl fmt::Display for NodeErrorType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            NodeErrorType::Regular(ref err) => write!(f, "Error: {:?}", err),
+        }
+    }
+}
+
+impl Error for NodeErrorType {
+    fn description(&self) -> &str {
+        match *self {
+            NodeErrorType::Regular(ref err) => err.as_str(),
+        }
+    }
+}
+
+
+impl Node {
+
+    fn capture_with_regex(nodename: &str) -> Result<(String, String), NodeErrorType> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)\[([\d,\-/]+)\]").unwrap();
+        }
+        let (name, rangeset): (String, String) = match RE.captures(nodename) {
+            Some(value) => {
+                if value.len() == 3 {
+                    (value[1].to_string(), value[2].to_string())
+                } else {
+                    return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
+                }
+            },
+            None => {
+                    /* we did not match node[1-8/2] structure trying to match node01 structure type */
+                    lazy_static! {
+                        static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)([\d]+)").unwrap();
+                    }
+                    let (name, rangeset): (String, String) = match RE.captures(nodename) {
+                        Some(value) => {
+                            if value.len() == 3 {
+                                (value[1].to_string(), value[2].to_string())
+                            } else {
+                                for v in value.iter() {
+                                    println!("value {:?}", v);
+                                }
+                                return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
+                            }
+                        },
+                        None => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
+                    };
+                    (name, rangeset)
+                },
+        };
+
+        Ok((name, rangeset))
+    }
+
+    /* Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-64/2]" or node01 */
+    pub fn new(str: &str) -> Result<Node, NodeErrorType> {
+        let (name, set) = Node::capture_with_regex(str)?;
+        let rangeset = match RangeSet::new(&set) {
+            Ok(r) => r,
+            Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
+        };
+
+        Ok(Node { name, set: rangeset })
+    }
+}
+
+
+/// Range iterator returns an already padded String.
+impl Iterator for Node {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+
+      let next = match self.set.next() {
+          Some(v) => v,
+          None => return None,
+      };
+      let nodestr = format!("{}{}", self.name, next);
+      return Some(nodestr);
+    }
+}
+
+/// Display trait for Node. It will display the node in a folded way
+impl fmt::Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.set.is_alone() {
+            write!(f, "{}{}", self.name, self.set)
+        } else {
+            write!(f, "{}[{}]", self.name, self.set)
+        }
+    }
+}
+
+
