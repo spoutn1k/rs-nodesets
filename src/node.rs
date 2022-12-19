@@ -134,7 +134,7 @@ impl Iterator for Node {
           None => return None,
       };
       let nodestr = format!("{}{}", self.name, next);
-      return Some(nodestr);
+      Some(nodestr)
     }
 }
 

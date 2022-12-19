@@ -80,11 +80,10 @@ impl Range {
         let len1 = start.len();
         let number: u32 = start.parse()?;
         let len2 = number.to_string().len();
-        let pad: usize;
 
-        match len1.cmp(&len2) {
-            Ordering::Greater => pad = len1,
-            _ => pad = 0,
+        let pad: usize = match len1.cmp(&len2) {
+            Ordering::Greater => len1,
+            _ => 0,
         };
 
         let start = start.parse()?;
@@ -124,22 +123,52 @@ impl Iterator for Range {
 /// Display trait for Range. It will display the range in a folded way
 impl fmt::Display for Range {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let to_display: String;
-        let start_end_str: String;
         let pad = self.pad;
 
-        if self.start != self.end {
-            start_end_str = format!("{:0pad$}-{:0pad$}", self.start, self.end);
+        let start_end_str: String = if self.start != self.end {
+            format!("{:0pad$}-{:0pad$}", self.start, self.end)
         } else {
-            start_end_str = format!("{:0pad$}", self.start);
-        }
+            format!("{:0pad$}", self.start)
+        };
 
-        if self.step != 1 {
-            to_display = format!("{}/{}", start_end_str, self.step);
+        let to_display: String = if self.step != 1 {
+            format!("{}/{}", start_end_str, self.step)
         } else {
-            to_display = format!("{}", start_end_str);
-        }
+            start_end_str
+        };
 
         write!(f, "{}", to_display)
     }
+}
+
+
+/// PartialEq trait for Range to know if a range is equal or not
+/// to another range.
+/// padding is not taken into account ie 1-100/2 equals 001-100/2
+/// curr is not taken into account the range is the same anywhere
+/// the iterator may be located
+impl PartialEq for Range {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start && self.end == other.end && self.step == other.step
+    }
+}
+
+
+/*** Tests ***/
+
+#[test]
+fn testing_creating_range() {
+
+    let range = Range::new("1-10").unwrap();
+    assert_eq!(range, Range{start: 1, end:10, step:1, pad:0, curr:0});
+
+    let range = Range::new("10-1").unwrap();
+    assert_eq!(range, Range{start: 10, end:1, step:1, pad:0, curr:0});
+
+    let range = Range::new("1-10/2").unwrap();
+    assert_eq!(range, Range{start: 1, end:10, step:2, pad:0, curr:0});
+
+    let range = Range::new("10-1/3").unwrap();
+    assert_eq!(range, Range{start: 10, end:1, step:3, pad:0, curr:0});
+
 }

@@ -53,7 +53,7 @@ impl RangeSet {
     /// "[1-5/2]" or "[1,3-5,89]" or "[9-15/3,4,9-2]"
     pub fn new(strange: &str) -> Result<RangeSet, Box<dyn Error>> {
         let mut set: Vec<Range> = Vec::new();
-        let rangeset: Vec<&str> = strange.split(",").collect();
+        let rangeset: Vec<&str> = strange.split(',').collect();
         let curr = 0;
 
         for rs in rangeset {
@@ -96,7 +96,7 @@ impl Iterator for RangeSet {
             }
         };
 
-        return next;
+        next
     }
 }
 
