@@ -52,7 +52,6 @@ pub struct Range {
 }
 
 impl Range {
-
     pub fn start_is_end(&self) -> bool {
         self.start == self.end
     }
@@ -125,22 +124,13 @@ impl fmt::Display for Range {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let pad = self.pad;
 
-        let start_end_str: String = if self.start != self.end {
-            format!("{:0pad$}-{:0pad$}", self.start, self.end)
-        } else {
-            format!("{:0pad$}", self.start)
-        };
+        let start_end_str: String = if self.start != self.end { format!("{:0pad$}-{:0pad$}", self.start, self.end) } else { format!("{:0pad$}", self.start) };
 
-        let to_display: String = if self.step != 1 {
-            format!("{}/{}", start_end_str, self.step)
-        } else {
-            start_end_str
-        };
+        let to_display: String = if self.step != 1 { format!("{}/{}", start_end_str, self.step) } else { start_end_str };
 
         write!(f, "{}", to_display)
     }
 }
-
 
 /// PartialEq trait for Range to know if a range is equal or not
 /// to another range.
@@ -153,22 +143,19 @@ impl PartialEq for Range {
     }
 }
 
-
 /*** Tests ***/
 
 #[test]
 fn testing_creating_range() {
-
     let range = Range::new("1-10").unwrap();
-    assert_eq!(range, Range{start: 1, end:10, step:1, pad:0, curr:0});
+    assert_eq!(range, Range { start: 1, end: 10, step: 1, pad: 0, curr: 0 });
 
     let range = Range::new("10-1").unwrap();
-    assert_eq!(range, Range{start: 10, end:1, step:1, pad:0, curr:0});
+    assert_eq!(range, Range { start: 10, end: 1, step: 1, pad: 0, curr: 0 });
 
     let range = Range::new("1-10/2").unwrap();
-    assert_eq!(range, Range{start: 1, end:10, step:2, pad:0, curr:0});
+    assert_eq!(range, Range { start: 1, end: 10, step: 2, pad: 0, curr: 0 });
 
     let range = Range::new("10-1/3").unwrap();
-    assert_eq!(range, Range{start: 10, end:1, step:3, pad:0, curr:0});
-
+    assert_eq!(range, Range { start: 10, end: 1, step: 3, pad: 0, curr: 0 });
 }

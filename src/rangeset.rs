@@ -44,7 +44,6 @@ pub struct RangeSet {
 }
 
 impl RangeSet {
-
     /// True when we only have one member: node003
     pub fn is_alone(&self) -> bool {
         self.set.len() == 1 && self.set[0].start_is_end() && self.set[0].step_is_one()
@@ -72,7 +71,6 @@ impl RangeSet {
         RangeSet { set, curr }
     }
 }
-
 
 /// RangeSet iterator returns an already padded String as Range does.
 impl Iterator for RangeSet {
@@ -117,4 +115,3 @@ impl fmt::Display for RangeSet {
         write!(f, "{}", to_display)
     }
 }
-

@@ -21,10 +21,10 @@
  */
 
 use crate::rangeset::RangeSet;
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::error::Error;
 use std::fmt;
-use regex::Regex;
-use lazy_static::lazy_static;
 
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct Node {
@@ -35,25 +35,23 @@ pub struct Node {
 
 #[derive(Debug)]
 pub enum NodeErrorType {
-    Regular(ErrorKind)
+    Regular(ErrorKind),
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ErrorKind {
-        RegexNoMatch,
-        RegexNotTwoMatch,
+    RegexNoMatch,
+    RegexNotTwoMatch,
 }
-
 
 impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
             ErrorKind::RegexNoMatch => "no match found in string",
-            ErrorKind::RegexNotTwoMatch => "did not match exactly two groups"
+            ErrorKind::RegexNotTwoMatch => "did not match exactly two groups",
         }
     }
 }
-
 
 impl fmt::Display for NodeErrorType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -71,9 +69,7 @@ impl Error for NodeErrorType {
     }
 }
 
-
 impl Node {
-
     fn capture_with_regex(nodename: &str) -> Result<(String, String, String), NodeErrorType> {
         lazy_static! {
             static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)\[([\d,\-/]+)\]([\.\-\w]*)").unwrap();
@@ -89,28 +85,28 @@ impl Node {
                 } else {
                     return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
                 }
-            },
+            }
             None => {
-                    /* we did not match node[1-8/2] structure trying to match node01 structure type */
-                    lazy_static! {
-                        static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)([\d]+)").unwrap();
-                    }
-                    let (name, rangeset, suffix): (String, String, String) = match RE.captures(nodename) {
-                        Some(value) => {
-                            if value.len() == 3 {
-                                if value.len() == 4 {
-                                    (value[1].to_string(), value[2].to_string(), value[3].to_string())
-                                } else {
-                                    (value[1].to_string(), value[2].to_string(), "".to_string())
-                                }
+                /* we did not match node[1-8/2] structure trying to match node01 structure type */
+                lazy_static! {
+                    static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)([\d]+)").unwrap();
+                }
+                let (name, rangeset, suffix): (String, String, String) = match RE.captures(nodename) {
+                    Some(value) => {
+                        if value.len() == 3 {
+                            if value.len() == 4 {
+                                (value[1].to_string(), value[2].to_string(), value[3].to_string())
                             } else {
-                                return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
+                                (value[1].to_string(), value[2].to_string(), "".to_string())
                             }
-                        },
-                        None => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
-                    };
-                    (name, rangeset, suffix)
-                },
+                        } else {
+                            return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
+                        }
+                    }
+                    None => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
+                };
+                (name, rangeset, suffix)
+            }
         };
 
         Ok((name, rangeset, suffix))
@@ -128,19 +124,17 @@ impl Node {
     }
 }
 
-
 /// Range iterator returns an already padded String.
 impl Iterator for Node {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-
-      let next = match self.set.next() {
-          Some(v) => v,
-          None => return None,
-      };
-      let nodestr = format!("{}{}{}", self.name, next, self.suffix);
-      Some(nodestr)
+        let next = match self.set.next() {
+            Some(v) => v,
+            None => return None,
+        };
+        let nodestr = format!("{}{}{}", self.name, next, self.suffix);
+        Some(nodestr)
     }
 }
 
@@ -154,5 +148,3 @@ impl fmt::Display for Node {
         }
     }
 }
-
-
