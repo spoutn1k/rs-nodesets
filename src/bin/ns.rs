@@ -99,5 +99,5 @@ fn main() {
     print_rangeset("1-10,7-12/2");
     print_node("node[01-10,7-12/2]");
     print_node("node001");
-    print_node("node[1-2]");
+    print_node("node[1-2]-ipmi");
 }

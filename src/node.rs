@@ -30,6 +30,7 @@ use lazy_static::lazy_static;
 pub struct Node {
     name: String,
     set: RangeSet,
+    suffix: String,
 }
 
 #[derive(Debug)]
@@ -41,7 +42,7 @@ pub enum NodeErrorType {
 pub enum ErrorKind {
         RegexNoMatch,
         RegexNotTwoMatch,
- }
+}
 
 
 impl ErrorKind {
@@ -73,14 +74,18 @@ impl Error for NodeErrorType {
 
 impl Node {
 
-    fn capture_with_regex(nodename: &str) -> Result<(String, String), NodeErrorType> {
+    fn capture_with_regex(nodename: &str) -> Result<(String, String, String), NodeErrorType> {
         lazy_static! {
-            static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)\[([\d,\-/]+)\]").unwrap();
+            static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)\[([\d,\-/]+)\]([\.\-\w]*)").unwrap();
         }
-        let (name, rangeset): (String, String) = match RE.captures(nodename) {
+        let (name, rangeset, suffix): (String, String, String) = match RE.captures(nodename) {
             Some(value) => {
-                if value.len() == 3 {
-                    (value[1].to_string(), value[2].to_string())
+                if value.len() >= 3 {
+                    if value.len() == 4 {
+                        (value[1].to_string(), value[2].to_string(), value[3].to_string())
+                    } else {
+                        (value[1].to_string(), value[2].to_string(), "".to_string())
+                    }
                 } else {
                     return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
                 }
@@ -90,35 +95,36 @@ impl Node {
                     lazy_static! {
                         static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)([\d]+)").unwrap();
                     }
-                    let (name, rangeset): (String, String) = match RE.captures(nodename) {
+                    let (name, rangeset, suffix): (String, String, String) = match RE.captures(nodename) {
                         Some(value) => {
                             if value.len() == 3 {
-                                (value[1].to_string(), value[2].to_string())
-                            } else {
-                                for v in value.iter() {
-                                    println!("value {:?}", v);
+                                if value.len() == 4 {
+                                    (value[1].to_string(), value[2].to_string(), value[3].to_string())
+                                } else {
+                                    (value[1].to_string(), value[2].to_string(), "".to_string())
                                 }
+                            } else {
                                 return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
                             }
                         },
                         None => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
                     };
-                    (name, rangeset)
+                    (name, rangeset, suffix)
                 },
         };
 
-        Ok((name, rangeset))
+        Ok((name, rangeset, suffix))
     }
 
     /* Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-64/2]" or node01 */
     pub fn new(str: &str) -> Result<Node, NodeErrorType> {
-        let (name, set) = Node::capture_with_regex(str)?;
+        let (name, set, suffix) = Node::capture_with_regex(str)?;
         let rangeset = match RangeSet::new(&set) {
             Ok(r) => r,
             Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
         };
 
-        Ok(Node { name, set: rangeset })
+        Ok(Node { name, set: rangeset, suffix })
     }
 }
 
@@ -133,7 +139,7 @@ impl Iterator for Node {
           Some(v) => v,
           None => return None,
       };
-      let nodestr = format!("{}{}", self.name, next);
+      let nodestr = format!("{}{}{}", self.name, next, self.suffix);
       Some(nodestr)
     }
 }
@@ -142,9 +148,9 @@ impl Iterator for Node {
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.set.is_alone() {
-            write!(f, "{}{}", self.name, self.set)
+            write!(f, "{}{}{}", self.name, self.set, self.suffix)
         } else {
-            write!(f, "{}[{}]", self.name, self.set)
+            write!(f, "{}[{}]{}", self.name, self.set, self.suffix)
         }
     }
 }
