@@ -97,7 +97,7 @@ fn main() {
     print_rangeset("9-2,101,2-8/2");
     print_rangeset("10-1/2,32-72/4");
     print_rangeset("1-10,7-12/2");
-    print_node("node[1-10,7-12/2]");
+    print_node("node[01-10,7-12/2]");
     print_node("node001");
     print_node("node[1-2]");
 }
