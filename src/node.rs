@@ -29,8 +29,9 @@ use std::fmt;
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct Node {
     name: String,
-    set: RangeSet,
-    suffix: String,
+    sets: Vec<RangeSet>,
+    values: Vec<(u32, usize)>,
+    first: bool,
 }
 
 #[derive(Debug)]
@@ -41,14 +42,12 @@ pub enum NodeErrorType {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ErrorKind {
     RegexNoMatch,
-    RegexNotTwoMatch,
 }
 
 impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
             ErrorKind::RegexNoMatch => "no match found in string",
-            ErrorKind::RegexNotTwoMatch => "did not match exactly two groups",
         }
     }
 }
@@ -69,82 +68,147 @@ impl Error for NodeErrorType {
     }
 }
 
-impl Node {
-    fn capture_with_regex(nodename: &str) -> Result<(String, String, String), NodeErrorType> {
-        lazy_static! {
-            static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)\[([\d,\-/]+)\]([\.\-\w]*)").unwrap();
-        }
-        let (name, rangeset, suffix): (String, String, String) = match RE.captures(nodename) {
-            Some(value) => {
-                if value.len() >= 3 {
-                    if value.len() == 4 {
-                        (value[1].to_string(), value[2].to_string(), value[3].to_string())
-                    } else {
-                        (value[1].to_string(), value[2].to_string(), "".to_string())
-                    }
-                } else {
-                    return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
-                }
-            }
-            None => {
-                /* we did not match node[1-8/2] structure trying to match node01 structure type */
-                lazy_static! {
-                    static ref RE: Regex = Regex::new(r"^([[[:alpha:]]_\-]+)([\d]+)").unwrap();
-                }
-                let (name, rangeset, suffix): (String, String, String) = match RE.captures(nodename) {
-                    Some(value) => {
-                        if value.len() == 3 {
-                            if value.len() == 4 {
-                                (value[1].to_string(), value[2].to_string(), value[3].to_string())
-                            } else {
-                                (value[1].to_string(), value[2].to_string(), "".to_string())
-                            }
-                        } else {
-                            return Err(NodeErrorType::Regular(ErrorKind::RegexNotTwoMatch));
-                        }
-                    }
-                    None => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
-                };
-                (name, rangeset, suffix)
-            }
-        };
+lazy_static! {
+    static ref RE: Regex = Regex::new(r"\[([\d,\-/]+)\]|([\d]+)").unwrap();
+}
 
-        Ok((name, rangeset, suffix))
+impl Node {
+    /// Captures with regex all possible (and non overlapping) rangeset in the node name
+    /// for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
+    /// It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2
+    fn capture_with_regex(nodename: &str) -> Result<(String, Vec<String>), NodeErrorType> {
+        let mut rangesets: Vec<String> = Vec::new();
+        let mut name = nodename.to_string();
+        for capture in RE.captures_iter(nodename) {
+            // println!("capture: {:?}", capture);
+            match capture.get(1) {
+                Some(text) => rangesets.push(text.as_str().to_string()),
+                None => {
+                        match capture.get(2) {
+                            Some(text) => rangesets.push(text.as_str().to_string()),
+                            None => (),
+                        };
+                }
+            };
+        };
+        if rangesets.len() > 0 {
+            name = RE.replace_all(nodename, "{}").to_string();
+        }
+        // println!("name: {}", name);
+
+        Ok((name, rangesets))
     }
 
-    /* Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-64/2]" or node01 */
+    /* Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-2]core[1-64]" or node01 */
     pub fn new(str: &str) -> Result<Node, NodeErrorType> {
-        let (name, set, suffix) = Node::capture_with_regex(str)?;
-        let rangeset = match RangeSet::new(&set) {
-            Ok(r) => r,
-            Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
-        };
+        let (name, rangesets) = Node::capture_with_regex(str)?;
+        let mut sets: Vec<RangeSet> = Vec::new();
+        let mut values: Vec<(u32, usize)> = Vec::new();
+        for set in rangesets {
+            let rangeset = match RangeSet::new(&set) {
+                Ok(r) => r,
+                Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
+            };
+            sets.push(rangeset);
+            values.push((0, 0));
+        }
 
-        Ok(Node { name, set: rangeset, suffix })
+        Ok(Node {
+            name,
+            sets,
+            values,
+            first: true,
+        })
+    }
+
+
+    fn make_node_string(&self) -> String {
+        let mut nodestr: &str = self.name.as_str();
+        let mut replaced;
+
+        for i in 0..self.sets.len() {
+            let (current, pad) = self.values[i];
+            replaced = nodestr.replacen("{}", format!("{:0pad$}", current).as_str(), 1);
+            nodestr = replaced.as_str();
+        }
+
+        nodestr.to_string()
+
+    }
+
+
+    /* @todo : get padding to use it ! */
+    fn get_next(&mut self) -> Option<(u32, usize)> {
+
+        for i in (0..self.sets.len()).rev() {
+            //println!("{}: {:?}", i, self.sets[i]);
+            match self.sets[i].get_next() {
+                Some(v) => {
+                    //println!("{}: {:?} - {}", i, self.sets[i], v);
+                    self.values[i] = v;
+                    return Some(v);
+                },
+                None => {
+                    self.sets[i].reset();
+                    self.values[i] = self.sets[i].get_current();
+                    self.sets[i].get_next();
+                },
+            };
+        }
+
+        return None;
     }
 }
 
-/// Range iterator returns an already padded String.
+/// Range and Rangeset iterator returns an already padded String
+/// but get_next() method doesn't.
 impl Iterator for Node {
     type Item = String;
 
+
     fn next(&mut self) -> Option<Self::Item> {
-        let next = match self.set.next() {
-            Some(v) => v,
-            None => return None,
-        };
-        let nodestr = format!("{}{}{}", self.name, next, self.suffix);
-        Some(nodestr)
+
+        if self.sets.is_empty() {
+            if self.first {
+                self.first = false;
+                return Some(self.name.to_string());
+            } else {
+                return None;
+            }
+        } else {
+
+            if self.first {
+                self.first = false;
+                for i in 0..self.sets.len() {
+                    self.values[i] = match self.sets[i].get_next() {
+                        Some(v) => v,
+                        None => self.sets[i].get_current(),
+                    };
+                }
+              return Some(self.make_node_string());
+            }
+
+            match self.get_next() {
+                Some(_) => return Some(self.make_node_string()),
+                None => return None,
+            };
+        }
     }
 }
 
 /// Display trait for Node. It will display the node in a folded way
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.set.is_alone() {
-            write!(f, "{}{}{}", self.name, self.set, self.suffix)
-        } else {
-            write!(f, "{}[{}]{}", self.name, self.set, self.suffix)
+        let mut nodestr: &str = self.name.as_str();
+        let mut replaced;
+        for set in &self.sets {
+            if set.is_alone() {
+                replaced = nodestr.replacen("{}", format!("{}", set).as_str(), 1)
+            } else {
+                replaced = nodestr.replacen("{}", format!("[{}]", set).as_str(), 1)
+            };
+            nodestr = replaced.as_str();
         }
+        write!(f, "{}", nodestr)
     }
 }

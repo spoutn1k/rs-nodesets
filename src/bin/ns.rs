@@ -37,6 +37,7 @@ use std::process::exit;
 /// A global name 'rack{}node{}.panel{}' and a vector of sets.
 
 fn print_range(range_str: &str) {
+    println!();
     let range = match Range::new(range_str) {
         Ok(r) => r,
         Err(e) => {
@@ -49,11 +50,13 @@ fn print_range(range_str: &str) {
     println!("Range: {:?}", range);
 
     for i in range {
-        println!("{}", i);
+        print!("{} ", i);
     }
+    println!();
 }
 
 fn print_rangeset(rangeset_str: &str) {
+    println!();
     let rangeset = match RangeSet::new(rangeset_str) {
         Ok(r) => r,
         Err(e) => {
@@ -66,11 +69,13 @@ fn print_rangeset(rangeset_str: &str) {
     println!("RangeSet: {:?}", rangeset);
 
     for i in rangeset {
-        println!("{}", i);
+        print!("{} ", i);
     }
+    println!();
 }
 
 fn print_node(node_str: &str) {
+    println!();
     let node = match Node::new(node_str) {
         Ok(n) => n,
         Err(e) => {
@@ -78,13 +83,15 @@ fn print_node(node_str: &str) {
             exit(1);
         }
     };
-    println!("Node: {}", node_str);
-    println!("Node: {}", node);
-    println!("Node: {:?}", node);
+    println!("Node string display : {}", node_str);
+    println!("Node normal display : {}", node);
+    println!("Node debug display  : {:?}", node);
 
+    // use of the iterator
     for n in node {
-        println!("{}", n);
+        print!("{} ", n);
     }
+    println!();
 }
 
 fn main() {
@@ -96,9 +103,15 @@ fn main() {
     print_rangeset("1,3-5,89");
     print_rangeset("9-2,101,2-8/2");
     print_rangeset("10-1/2,32-72/4");
-    print_rangeset("1-10,7-12/2");
+    print_rangeset("01-10,7-12/2");
+    print_node("r[1-6]esw[1-3]");
     print_node("node[01-10,7-12/2]");
     print_node("node001");
     print_node("node[1]");
-    print_node("node[1-2]-ipmi");
+    print_node("r1esw3");
+    print_node("r1esw[2-6]");
+    print_node("toto");
+    print_node("r[1-10/2,15]esw[2-8]");
+    print_node("rack1-node[1-4]-cpu2");
+    print_node("rack[1-4]-node[01-04]-cpu[1-4]");
 }

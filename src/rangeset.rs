@@ -25,18 +25,23 @@ use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
 
-/// A RangeSet is a vector of Range. Unlike Range a RangeSet
-/// may not be ordered. Specified order is kept when generating numbers
-/// with the iterator.
-/// set is the vector of Range. It may be empty.
-/// curr is used remember the current index in the vector of Ranges
+/// A RangeSet is a vector of Range.
+/// Unlike Range a RangeSet may not be ordered. Specified order is
+/// kept when generating numbers with the iterator.
+/// * `set` is the vector of Range. It may be empty.
+/// * `curr` is used remember the current index in the vector of Ranges
 ///      and is used to calculate next number in RangeSet iterator's
 ///      implementation.
 ///
 /// RangeSet examples:
-/// * 1,3-5,89
-/// * 9-2,101,2-8/2
+/// * "1,3-5,89"
+/// * "9-2,101,2-8/2"
 ///
+/// Example:
+/// ```rust
+/// use nodeset::rangeset::RangeSet;
+/// rangeset = RangeSet::new("22-28/2,29")
+/// ```
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct RangeSet {
     set: Vec<Range>,
@@ -44,9 +49,48 @@ pub struct RangeSet {
 }
 
 impl RangeSet {
-    /// True when we only have one member: node003
+    /// True when we only have one member and not a set ie: node003
     pub fn is_alone(&self) -> bool {
         self.set.len() == 1 && self.set[0].start_is_end() && self.set[0].step_is_one()
+    }
+
+    pub fn reset(&mut self) {
+        self.curr = 0;
+        for i in 0..self.set.len() {
+            self.set[i].reset()
+        }
+    }
+
+    pub fn get_current(&self) -> (u32, usize) {
+        let index = self.curr;
+        let pad = self.set[index].get_pad();
+
+        (self.set[index].get_current(), pad)
+    }
+
+    pub fn get_next(&mut self) -> Option<(u32, usize)> {
+        let index = self.curr;
+        let mut pad = self.set[index].get_pad();
+
+        let next = match self.set[index].get_next() {
+            Some(number) => number, // gives next number in Range range.
+            None => {
+                /* This tells us that range Range is finished : need to iter over next range. */
+                if index + 1 < self.set.len() {
+                    /* There is another Range in the vector */
+                    self.curr = index + 1;
+                    pad = self.set[self.curr].get_pad();
+                    match self.set[self.curr].get_next() {
+                        Some(number) => number,
+                        None => return None,
+                    }
+                } else {
+                    /* There is no other Range in the vector */
+                    return None;
+                }
+            }
+        };
+        Some((next, pad))
     }
 
     /// "[1-5/2]" or "[1,3-5,89]" or "[9-15/3,4,9-2]"
@@ -62,13 +106,20 @@ impl RangeSet {
             };
             set.push(range);
         }
-        Ok(RangeSet { set, curr })
+        Ok(RangeSet {
+            set,
+            curr,
+        })
     }
+
     pub fn empty() -> RangeSet {
         let set: Vec<Range> = Vec::new();
         let curr = 0;
 
-        RangeSet { set, curr }
+        RangeSet {
+            set,
+            curr,
+        }
     }
 }
 
@@ -77,24 +128,13 @@ impl Iterator for RangeSet {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let index = self.curr;
-
-        let next: Option<Self::Item> = match self.set[index].next() {
-            Some(number) => Some(number), // gives next number in Range range.
-            None => {
-                /* This tells us that range Range is finished : need to iter over next range. */
-                if index + 1 < self.set.len() {
-                    /* There is another Range in the vector */
-                    self.curr = index + 1;
-                    self.set[self.curr].next()
-                } else {
-                    /* There is no other Range in the vector */
-                    None
-                }
-            }
+        let (next_u32, pad) = match self.get_next() {
+            Some(v) => v,
+            None => return None,
         };
 
-        next
+        let next = format!("{:0pad$}", next_u32);
+        Some(next)
     }
 }
 
