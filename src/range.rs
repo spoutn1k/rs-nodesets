@@ -27,7 +27,7 @@ use std::fmt;
 /// A range is composed of ordered numbers (at least one)
 /// A range may be incremental or decremental. Padding is
 /// taken into account with the number of zeros found at
-/// the begining of the first number.
+/// the beginning of the first number.
 ///
 /// Range examples:
 /// * 10-49
@@ -42,7 +42,7 @@ use std::fmt;
 /// let range = Range::new("01-15/3");
 /// ```
 ///
-///  Structure description that may help developpers:
+///  Structure description that may help developers:
 /// * `start` is the start of the range
 /// * `end` is the end of the range
 /// * `step` is the step to apply between each increment of this Range

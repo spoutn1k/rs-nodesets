@@ -51,7 +51,7 @@ use std::fmt;
 /// ```
 ///
 ///
-/// Struture used to keep Node définition.
+/// Structure used to keep Node definition.
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct Node {
     name: String,
