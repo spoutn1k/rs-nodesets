@@ -40,7 +40,7 @@ use std::fmt::Write;
 /// Example:
 /// ```rust
 /// use nodeset::rangeset::RangeSet;
-/// rangeset = RangeSet::new("22-28/2,29")
+/// let rangeset = RangeSet::new("22-28/2,29");
 /// ```
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct RangeSet {

@@ -84,14 +84,14 @@ impl Node {
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {
-                        match capture.get(2) {
-                            Some(text) => rangesets.push(text.as_str().to_string()),
-                            None => (),
-                        };
+                    match capture.get(2) {
+                        Some(text) => rangesets.push(text.as_str().to_string()),
+                        None => (),
+                    };
                 }
             };
-        };
-        if rangesets.len() > 0 {
+        }
+        if !rangesets.is_empty() {
             name = RE.replace_all(nodename, "{}").to_string();
         }
         // println!("name: {}", name);
@@ -121,7 +121,6 @@ impl Node {
         })
     }
 
-
     fn make_node_string(&self) -> String {
         let mut nodestr: &str = self.name.as_str();
         let mut replaced;
@@ -133,13 +132,9 @@ impl Node {
         }
 
         nodestr.to_string()
-
     }
 
-
-    /* @todo : get padding to use it ! */
     fn get_next(&mut self) -> Option<(u32, usize)> {
-
         for i in (0..self.sets.len()).rev() {
             //println!("{}: {:?}", i, self.sets[i]);
             match self.sets[i].get_next() {
@@ -147,16 +142,16 @@ impl Node {
                     //println!("{}: {:?} - {}", i, self.sets[i], v);
                     self.values[i] = v;
                     return Some(v);
-                },
+                }
                 None => {
                     self.sets[i].reset();
                     self.values[i] = self.sets[i].get_current();
                     self.sets[i].get_next();
-                },
+                }
             };
         }
 
-        return None;
+        None
     }
 }
 
@@ -165,18 +160,15 @@ impl Node {
 impl Iterator for Node {
     type Item = String;
 
-
     fn next(&mut self) -> Option<Self::Item> {
-
         if self.sets.is_empty() {
             if self.first {
                 self.first = false;
-                return Some(self.name.to_string());
+                Some(self.name.to_string())
             } else {
-                return None;
+                None
             }
         } else {
-
             if self.first {
                 self.first = false;
                 for i in 0..self.sets.len() {
@@ -185,13 +177,13 @@ impl Iterator for Node {
                         None => self.sets[i].get_current(),
                     };
                 }
-              return Some(self.make_node_string());
+                return Some(self.make_node_string());
             }
 
             match self.get_next() {
-                Some(_) => return Some(self.make_node_string()),
-                None => return None,
-            };
+                Some(_) => Some(self.make_node_string()),
+                None => None,
+            }
         }
     }
 }

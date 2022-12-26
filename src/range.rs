@@ -20,7 +20,6 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
 use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt;
@@ -40,7 +39,7 @@ use std::fmt;
 /// Example:
 /// ```rust
 /// use nodeset::range::Range;
-/// rangeset = Range::new("01-15/3")
+/// let range = Range::new("01-15/3");
 /// ```
 ///
 ///  Structure description that may help developpers:
@@ -80,18 +79,16 @@ impl Range {
         self.curr = self.start;
     }
 
-
     /// Returns the padding that applies to the Range.
     pub fn get_pad(&self) -> usize {
         self.pad
     }
 
-
     pub fn get_current(&self) -> u32 {
         self.curr
     }
 
-    /// Returns the next value as an Option<u32>.
+    /// Returns the next value as an `Option<u32>`.
     /// It returns None when there is no next value to
     /// get. Note that Range implements Iterator trait
     /// that you may use in normal cases.

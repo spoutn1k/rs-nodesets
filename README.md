@@ -3,6 +3,28 @@
 ## Description
 
 Will be a library and a program to manage nodesets.
+As of now one can do:
+
+```rust
+    use nodeset::node::Node;
+
+    let node = match Node::new("r[1-10/2,15]esw[2-8]") {
+        Ok(n) => n,
+        Err(e) => {
+            println!("Error: {}", e);
+            exit(1);
+        }
+    };
+    println!("Node string display : {}", node_str);
+    println!("Node normal display : {}", node);
+    println!("Node debug display  : {:?}", node);
+
+    // use of the iterator
+    for n in node {
+        print!("{} ", n);
+    }
+    println!();
+```
 
 ## Installation
 
