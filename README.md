@@ -7,6 +7,7 @@ As of now one can do:
 
 ```rust
     use nodeset::node::Node;
+    use std::process::exit;
 
     let node = match Node::new("r[1-10/2,15]esw[2-8]") {
         Ok(n) => n,
@@ -15,7 +16,7 @@ As of now one can do:
             exit(1);
         }
     };
-    println!("Node string display : {}", node_str);
+    println!("Node string display : {}", "r[1-10/2,15]esw[2-8]");
     println!("Node normal display : {}", node);
     println!("Node debug display  : {:?}", node);
 

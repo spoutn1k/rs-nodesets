@@ -26,6 +26,32 @@ use regex::Regex;
 use std::error::Error;
 use std::fmt;
 
+/// A Node is a name that may contain multiple RangeSets and
+/// that defnines a machine name. For instance `node[1-14]` is
+/// a valid Node defining 14 nodes name from node1 to node14.
+/// Let's say that within these nodes we want to reference each
+/// core (32 per cpu) of each cpu (2 per node) we could do this
+/// writing `node[1-14]-cpu[1-2]-core[1-32]`.
+///
+/// ```rust
+///
+/// use nodeset::node::Node;
+/// use nodeset::range::Range;
+/// use nodeset::rangeset::RangeSet;
+/// use std::process::exit;
+/// let node = match Node::new("r1esw[2-6]") {
+///     Ok(n) => n,
+///     Err(e) => {
+///         println!("Error: {}", e);
+///         exit(1);
+///     }
+/// };
+/// let v: Vec<_> = node.into_iter().map(|x| x).collect();
+/// assert_eq!(v, ["r1esw2", "r1esw3", "r1esw4", "r1esw5", "r1esw6"]);
+/// ```
+///
+///
+/// Struture used to keep Node définition.
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct Node {
     name: String,
