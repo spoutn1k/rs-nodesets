@@ -68,6 +68,18 @@ impl RangeSet {
         (self.set[index].get_current(), pad)
     }
 
+    pub fn amount(&self) -> u32 {
+        if self.set.is_empty() {
+            0
+        } else {
+            let mut total = 0;
+            for r in self.set.iter() {
+                total += r.amount();
+            }
+            total
+        }
+    }
+
     pub fn get_next(&mut self) -> Option<(u32, usize)> {
         let index = self.curr;
         let mut pad = self.set[index].get_pad();

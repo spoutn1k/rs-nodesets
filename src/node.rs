@@ -99,6 +99,22 @@ lazy_static! {
 }
 
 impl Node {
+    pub fn amount(&self) -> u32 {
+        if self.sets.is_empty() {
+            if self.name.is_empty() {
+                0
+            } else {
+                1
+            }
+        } else {
+            let mut total = 1;
+            for r in self.sets.iter() {
+                total *= r.amount();
+            }
+            total
+        }
+    }
+
     /// Captures with regex all possible (and non overlapping) rangeset in the node name
     /// for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
     /// It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2

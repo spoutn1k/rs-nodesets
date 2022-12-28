@@ -84,6 +84,17 @@ impl Range {
         self.pad
     }
 
+    pub fn amount(&self) -> u32 {
+        match self.start.cmp(&self.end) {
+            Ordering::Greater => 1 + ((self.start - self.end) / self.step),
+            Ordering::Less => 1 + ((self.end - self.start) / self.step),
+            Ordering::Equal => 1,
+        }
+    }
+
+    /// This function is for internal use of the library.
+    /// it returns `curr` field of the Range structure that
+    /// is used for the Iterator.
     pub fn get_current(&self) -> u32 {
         self.curr
     }

@@ -48,6 +48,7 @@ fn print_range(range_str: &str) {
     println!("Range: {}", range_str);
     println!("Range: {}", range);
     println!("Range: {:?}", range);
+    println!("Count: {}", range.amount());
 
     for i in range {
         print!("{} ", i);
@@ -67,6 +68,7 @@ fn print_rangeset(rangeset_str: &str) {
     println!("RangeSet: {}", rangeset_str);
     println!("RangeSet: {}", rangeset);
     println!("RangeSet: {:?}", rangeset);
+    println!("Count   : {}", rangeset.amount());
 
     for i in rangeset {
         print!("{} ", i);
@@ -86,6 +88,7 @@ fn print_node(node_str: &str) {
     println!("Node string display : {}", node_str);
     println!("Node normal display : {}", node);
     println!("Node debug display  : {:?}", node);
+    println!("Node count          : {}", node.amount());
 
     // use of the iterator
     for n in node {
