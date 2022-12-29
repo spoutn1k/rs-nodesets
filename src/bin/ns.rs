@@ -20,7 +20,7 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 /// rack[10-49]node[1-25/2,78-89,101,1001].panel[0-30/4]
 /// Between ',' a Range :
 /// * 10-49
@@ -32,24 +32,51 @@ use clap::Parser;
 /// Between '[]' a Set
 /// A global name 'rack{}node{}.panel{}' and a vector of sets.
 use nodeset::node::Node;
+use std::error::Error;
 use std::process::exit;
 
 // This structure holds arguments provided to the program from the command line.
 #[derive(Parser, Debug)]
 /// This program manages nodeset(s) and is heavily inspired by clustershell's nodeset command
-#[command()]
-struct Args {
-    /// counts the number of nodes in nodeset(s).
+#[command(author, version, about, long_about = None)]
+#[command(propagate_version = true)]
+struct Arguments {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    Count(Count),
+    Expand(Expand),
+    Fold(Fold),
+}
+
+/// counts the number of nodes in nodeset(s).
+#[derive(Args, Debug)]
+struct Count {
     #[arg(short, long)]
-    count: bool,
-    /// expands nodeset(s) to separate nodes, as is.
-    #[arg(short, long)]
-    expand: bool,
+    total: bool,
     nodesets: Vec<String>,
 }
 
-fn count(args: &Args) {
-    for node_str in &args.nodesets {
+/// expands nodeset(s) to separate nodes, as is.
+#[derive(Args, Debug)]
+struct Expand {
+    #[arg(short, long)]
+    #[arg(default_value_t = ' ')]
+    separator: char,
+    nodesets: Vec<String>,
+}
+
+/// Folds nodeset(s) into a synthetic notation
+#[derive(Args, Debug)]
+struct Fold {
+    nodesets: Vec<String>,
+}
+
+fn count(count: &Count) {
+    for node_str in &count.nodesets {
         let node = match Node::new(&node_str) {
             Ok(n) => n,
             Err(e) => {
@@ -61,24 +88,37 @@ fn count(args: &Args) {
     }
 }
 
-fn expand(args: &Args) {
-    let separator = ' '; // default separator
-    for node_str in &args.nodesets {
-        let node = match Node::new(&node_str) {
-            Ok(n) => n,
-            Err(e) => {
-                println!("Error: {}", e);
-                exit(1);
-            }
-        };
-        for n in node {
-            print!("{}{}", n, separator);
-        }
+fn to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    let node = match Node::new(&node_str) {
+        Ok(n) => n,
+        Err(e) => return Err(Box::new(e)),
+    };
+    let mut v: Vec<String> = Vec::new();
+    for n in node {
+        v.push(format!("{}", n).to_string());
     }
+    Ok(v)
 }
 
-fn fold(args: &Args) {
-    for node_str in &args.nodesets {
+fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
+    let separator = &expand.separator;
+    for node_str in &expand.nodesets {
+        let v = to_vec_string(node_str)?;
+        let len = v.len();
+        for (i, n) in v.iter().enumerate() {
+            if i == len - 1 {
+                print!("{}", n);
+            } else {
+                print!("{}{}", n, separator);
+            }
+        }
+    }
+    println!();
+    Ok(())
+}
+
+fn fold(fold: &Fold) {
+    for node_str in &fold.nodesets {
         let node = match Node::new(&node_str) {
             Ok(n) => n,
             Err(e) => {
@@ -91,13 +131,23 @@ fn fold(args: &Args) {
 }
 
 fn main() {
-    let args = Args::parse();
+    let args = Arguments::parse();
 
-    if args.count {
-        count(&args);
-    } else if args.expand {
-        expand(&args);
-    } else {
-        fold(&args);
-    }
+    match &args.command {
+        Commands::Count(c) => {
+            count(c);
+        }
+        Commands::Expand(e) => {
+            match expand(e) {
+                Err(e) => {
+                    println!("Error: {}", e);
+                    exit(1);
+                }
+                _ => (),
+            };
+        }
+        Commands::Fold(f) => {
+            fold(f);
+        }
+    };
 }

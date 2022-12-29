@@ -193,7 +193,6 @@ impl Node {
                 }
             };
         }
-
         None
     }
 }
