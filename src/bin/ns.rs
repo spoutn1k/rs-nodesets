@@ -55,6 +55,7 @@ enum Commands {
 /// counts the number of nodes in nodeset(s).
 #[derive(Args, Debug)]
 struct Count {
+    /// sums all nodes of every given nodesets as it was one nodeset
     #[arg(short, long)]
     total: bool,
     nodesets: Vec<String>,
@@ -63,6 +64,7 @@ struct Count {
 /// expands nodeset(s) to separate nodes, as is.
 #[derive(Args, Debug)]
 struct Expand {
+    /// character to use to separate nodes
     #[arg(short, long)]
     #[arg(default_value_t = ' ')]
     separator: char,
@@ -76,6 +78,7 @@ struct Fold {
 }
 
 fn count(count: &Count) {
+    let mut total = 0;
     for node_str in &count.nodesets {
         let node = match Node::new(&node_str) {
             Ok(n) => n,
@@ -84,7 +87,14 @@ fn count(count: &Count) {
                 exit(1);
             }
         };
-        println!("{}", node.amount());
+        if count.total {
+            total += node.amount();
+        } else {
+            println!("{}", node.amount());
+        }
+    }
+    if count.total {
+        println!("{}", total);
     }
 }
 
