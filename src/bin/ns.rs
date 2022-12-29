@@ -105,7 +105,7 @@ fn main() {
     print_range("42-38");
     print_rangeset("1,3-5,89");
     print_rangeset("9-2,101,2-8/2");
-    print_rangeset("10-1/2,32-72/4");
+    print_rangeset("10-01/2,32-72/4");
     print_rangeset("01-10,7-12/2");
     print_node("r[1-6]esw[1-3]");
     print_node("node[01-10,7-12/2]");
