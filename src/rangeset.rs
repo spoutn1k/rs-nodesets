@@ -24,6 +24,7 @@ use crate::range::Range;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
+use std::process::exit; //used for testing
 
 /// A RangeSet is a vector of Range.
 /// Unlike Range a RangeSet may not be ordered. Specified order is
@@ -166,4 +167,35 @@ impl fmt::Display for RangeSet {
 
         write!(f, "{}", to_display)
     }
+}
+
+#[cfg(test)] /* Helper function for testing */
+fn get_rangeset_values_from_str(rangeset_str: &str) -> Vec<String> {
+    let rangeset = match RangeSet::new(rangeset_str) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let mut v: Vec<String> = Vec::new();
+    for r in rangeset {
+        v.push(r);
+    }
+    v
+}
+
+#[test]
+fn testing_rangeset_values() {
+    let value = get_rangeset_values_from_str("1,3-5,89");
+    assert_eq!(value, vec!["1", "3", "4", "5", "89"]);
+
+    let value = get_rangeset_values_from_str("9-2,101,2-8/2");
+    assert_eq!(value, vec!["9", "8", "7", "6", "5", "4", "3", "2", "101", "2", "4", "6", "8"]);
+
+    let value = get_rangeset_values_from_str("10-01/2,32-72/4");
+    assert_eq!(value, vec!["10", "08", "06", "04", "02", "32", "36", "40", "44", "48", "52", "56", "60", "64", "68", "72"]);
+
+    let value = get_rangeset_values_from_str("01-10,7-12/2");
+    assert_eq!(value, vec!["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "7", "9", "11"]);
 }

@@ -20,11 +20,7 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-use nodeset::node::Node;
-use nodeset::range::Range;
-use nodeset::rangeset::RangeSet;
-use std::process::exit;
-
+use clap::Parser;
 /// rack[10-49]node[1-25/2,78-89,101,1001].panel[0-30/4]
 /// Between ',' a Range :
 /// * 10-49
@@ -35,86 +31,73 @@ use std::process::exit;
 /// * 0-30/4
 /// Between '[]' a Set
 /// A global name 'rack{}node{}.panel{}' and a vector of sets.
+use nodeset::node::Node;
+use std::process::exit;
 
-fn print_range(range_str: &str) {
-    println!();
-    let range = match Range::new(range_str) {
-        Ok(r) => r,
-        Err(e) => {
-            println!("Error: {}", e);
-            exit(1);
-        }
-    };
-    println!("Range: {}", range_str);
-    println!("Range: {}", range);
-    println!("Range: {:?}", range);
-    println!("Count: {}", range.amount());
-
-    for i in range {
-        print!("{} ", i);
-    }
-    println!();
+// This structure holds arguments provided to the program from the command line.
+#[derive(Parser, Debug)]
+/// This program manages nodeset(s) and is heavily inspired by clustershell's nodeset command
+#[command()]
+struct Args {
+    /// counts the number of nodes in nodeset(s).
+    #[arg(short, long)]
+    count: bool,
+    /// expands nodeset(s) to separate nodes, as is.
+    #[arg(short, long)]
+    expand: bool,
+    nodesets: Vec<String>,
 }
 
-fn print_rangeset(rangeset_str: &str) {
-    println!();
-    let rangeset = match RangeSet::new(rangeset_str) {
-        Ok(r) => r,
-        Err(e) => {
-            println!("Error: {}", e);
-            exit(1);
-        }
-    };
-    println!("RangeSet: {}", rangeset_str);
-    println!("RangeSet: {}", rangeset);
-    println!("RangeSet: {:?}", rangeset);
-    println!("Count   : {}", rangeset.amount());
-
-    for i in rangeset {
-        print!("{} ", i);
+fn count(args: &Args) {
+    for node_str in &args.nodesets {
+        let node = match Node::new(&node_str) {
+            Ok(n) => n,
+            Err(e) => {
+                println!("Error: {}", e);
+                exit(1);
+            }
+        };
+        println!("{}", node.amount());
     }
-    println!();
 }
 
-fn print_node(node_str: &str) {
-    println!();
-    let node = match Node::new(node_str) {
-        Ok(n) => n,
-        Err(e) => {
-            println!("Error: {}", e);
-            exit(1);
+fn expand(args: &Args) {
+    let separator = ' '; // default separator
+    for node_str in &args.nodesets {
+        let node = match Node::new(&node_str) {
+            Ok(n) => n,
+            Err(e) => {
+                println!("Error: {}", e);
+                exit(1);
+            }
+        };
+        for n in node {
+            print!("{}{}", n, separator);
         }
-    };
-    println!("Node string display : {}", node_str);
-    println!("Node normal display : {}", node);
-    println!("Node debug display  : {:?}", node);
-    println!("Node count          : {}", node.amount());
-
-    // use of the iterator
-    for n in node {
-        print!("{} ", n);
     }
-    println!();
+}
+
+fn fold(args: &Args) {
+    for node_str in &args.nodesets {
+        let node = match Node::new(&node_str) {
+            Ok(n) => n,
+            Err(e) => {
+                println!("Error: {}", e);
+                exit(1);
+            }
+        };
+        println!("{}", node);
+    }
 }
 
 fn main() {
-    print_range("1-14/4");
-    print_range("38-42");
-    print_range("1");
-    print_range("097-103");
-    print_range("42-38");
-    print_rangeset("1,3-5,89");
-    print_rangeset("9-2,101,2-8/2");
-    print_rangeset("10-01/2,32-72/4");
-    print_rangeset("01-10,7-12/2");
-    print_node("r[1-6]esw[1-3]");
-    print_node("node[01-10,7-12/2]");
-    print_node("node001");
-    print_node("node[1]");
-    print_node("r1esw3");
-    print_node("r1esw[2-6]");
-    print_node("toto");
-    print_node("r[1-10/2,15]esw[2-8]");
-    print_node("rack1-node[1-4]-cpu2");
-    print_node("rack[1-4]-node[01-04]-cpu[1-4]");
+    let args = Args::parse();
+
+    if args.count {
+        count(&args);
+    } else if args.expand {
+        expand(&args);
+    } else {
+        fold(&args);
+    }
 }

@@ -23,6 +23,7 @@
 use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt;
+use std::process::exit; //used for testing
 
 /// A range is composed of ordered numbers (at least one)
 /// A range may be incremental or decremental. Padding is
@@ -229,7 +230,23 @@ impl PartialEq for Range {
     }
 }
 
-/*** Tests ***/
+/*********************************** Tests ***********************************/
+
+#[cfg(test)] /* Helper function for testing */
+fn get_range_values_from_str(range_str: &str) -> Vec<String> {
+    let range = match Range::new(range_str) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let mut v: Vec<String> = Vec::new();
+    for r in range {
+        v.push(r);
+    }
+    v
+}
 
 #[test]
 fn testing_creating_range() {
@@ -280,4 +297,22 @@ fn testing_creating_range() {
             curr: 0
         }
     );
+}
+
+#[test]
+fn testing_range_values() {
+    let value = get_range_values_from_str("1-14/4");
+    assert_eq!(value, vec!["1", "5", "9", "13"]);
+
+    let value = get_range_values_from_str("38-42");
+    assert_eq!(value, vec!["38", "39", "40", "41", "42"]);
+
+    let value = get_range_values_from_str("1");
+    assert_eq!(value, vec!["1"]);
+
+    let value = get_range_values_from_str("097-103");
+    assert_eq!(value, vec!["097", "098", "099", "100", "101", "102", "103"]);
+
+    let value = get_range_values_from_str("42-38");
+    assert_eq!(value, vec!["42", "41", "40", "39", "38"]);
 }

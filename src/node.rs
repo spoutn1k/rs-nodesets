@@ -25,6 +25,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
+use std::process::exit; // used for testing
 
 /// A Node is a name that may contain multiple RangeSets and
 /// that defnines a machine name. For instance `node[1-14]` is
@@ -245,4 +246,53 @@ impl fmt::Display for Node {
         }
         write!(f, "{}", nodestr)
     }
+}
+
+#[cfg(test)] /* Helper function for testing */
+fn get_node_values_from_str(node_str: &str) -> Vec<String> {
+    let node = match Node::new(node_str) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let mut v: Vec<String> = Vec::new();
+    for n in node {
+        v.push(n);
+    }
+    v
+}
+
+#[test]
+fn testing_nodes_values() {
+    let value = get_node_values_from_str("r[1-6]esw[1-3]");
+    assert_eq!(
+        value,
+        vec!["r1esw1", "r1esw2", "r1esw3", "r2esw1", "r2esw2", "r2esw3", "r3esw1", "r3esw2", "r3esw3", "r4esw1", "r4esw2", "r4esw3", "r5esw1", "r5esw2", "r5esw3", "r6esw1", "r6esw2", "r6esw3"]
+    );
+
+    let value = get_node_values_from_str("node[01-10,7-12/2]");
+    assert_eq!(value, vec!["node01", "node02", "node03", "node04", "node05", "node06", "node07", "node08", "node09", "node10", "node7", "node9", "node11"]);
+
+    let value = get_node_values_from_str("node001");
+    assert_eq!(value, vec!["node001"]);
+
+    let value = get_node_values_from_str("node[1]");
+    assert_eq!(value, vec!["node1"]);
+
+    let value = get_node_values_from_str("r1esw[2-6]");
+    assert_eq!(value, vec!["r1esw2", "r1esw3", "r1esw4", "r1esw5", "r1esw6"]);
+
+    let value = get_node_values_from_str("toto");
+    assert_eq!(value, vec!["toto"]);
+
+    let value = get_node_values_from_str("r[1-7/2,15]esw[2-4]");
+    assert_eq!(value, vec!["r1esw2", "r1esw3", "r1esw4", "r3esw2", "r3esw3", "r3esw4", "r5esw2", "r5esw3", "r5esw4", "r7esw2", "r7esw3", "r7esw4", "r15esw2", "r15esw3", "r15esw4"]);
+
+    let value = get_node_values_from_str("rack1-node[1-3]-cpu2");
+    assert_eq!(value, vec!["rack1-node1-cpu2", "rack1-node2-cpu2", "rack1-node3-cpu2"]);
+
+    let value = get_node_values_from_str("rack[1-2]-node[1-2]-cpu[1-2]");
+    assert_eq!(value, vec!["rack1-node1-cpu1", "rack1-node1-cpu2", "rack1-node2-cpu1", "rack1-node2-cpu2", "rack2-node1-cpu1", "rack2-node1-cpu2", "rack2-node2-cpu1", "rack2-node2-cpu2"]);
 }
