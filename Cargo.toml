@@ -6,7 +6,7 @@ authors = ["Olivier Delhomme <olivier.delhomme@free.fr>"]
 description = "NodeSet management library"
 repository = "https://gitlab.com/delhomme/nodeset/"
 license = "GPL-3.0-or-later"
-keywords = ["nodeset", "node", "set", "group", "cluster"]
+keywords = ["nodeset", "node", "set", "group", "cluster", "hpc"]
 categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
