@@ -71,6 +71,7 @@ impl RangeSet {
         (self.set[index].get_current(), pad)
     }
 
+    /// Counts the number of elements in the rangeset
     pub fn amount(&self) -> u32 {
         if self.set.is_empty() {
             0
@@ -170,6 +171,8 @@ impl fmt::Display for RangeSet {
         write!(f, "{}", to_display)
     }
 }
+
+/*********************************** Tests ***********************************/
 
 #[cfg(test)] /* Helper function for testing */
 fn get_rangeset_values_from_str(rangeset_str: &str) -> Vec<String> {

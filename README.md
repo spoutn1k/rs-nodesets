@@ -37,9 +37,9 @@ Node count          : 64
 r1esw2 r1esw3 r1esw4 r1esw5 r1esw6 r1esw7 r1esw8 r3esw2 r3esw3 r3esw4 r3esw5 r3esw6 r3esw7 r3esw8 r5esw2 r5esw3 r5esw4 r5esw5 r5esw6 r5esw7 r5esw8 r7esw2 r7esw3 r7esw4 r7esw5 r7esw6 r7esw7 r7esw8 r9esw2 r9esw3 r9esw4 r9esw5 r9esw6 r9esw7 r9esw8 r15esw2 r15esw3 r15esw4 r15esw5 r15esw6 r15esw7 r15esw8
 ```
 
-## `ns`
+## ns
 
-`ns` is a small command line tool to manage nodeset(s). Use -h or --help to get commands that are usable.
+`ns` is a small command line tool to manage nodeset(s). Use `-h` or `--help` to get commands that are usable.
 
 
-See `INSTALL.md` file in the root path of the code for instruction on how to install this crate.
+See [INSTALL.md](https://gitlab.com/delhomme/nodeset/-/blob/master/INSTALL.md) file in the root path of the code for instruction on how to install this crate.

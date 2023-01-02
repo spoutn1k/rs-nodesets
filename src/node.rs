@@ -27,7 +27,7 @@ use std::error::Error;
 use std::fmt;
 
 #[cfg(test)]
-use std::process::exit; // used for testing
+use std::process::exit;
 
 /// A Node is a name that may contain multiple RangeSets and
 /// that defnines a machine name. For instance `node[1-14]` is
@@ -53,8 +53,16 @@ use std::process::exit; // used for testing
 /// Note : to transform a node into a vector of Strings you may
 ///        prefer to use `node_to_vec_string()` function.
 
-/// Structure used to keep Node definition.
-#[derive(Debug)] /* Auto generates Debug trait */
+/*
+ * Structure used to keep Node definition
+ * * name is the name of the node where everything between brackets
+ *        (and the brackets themselves) is replaced by '{}'.
+ * * sets is a vector of rangesets: one rangeset per brackets found.
+ * * values is used to compute the iterator (and get_next) method.
+ * * first is also used to compute the iterator and is true until
+ *         the first time we pass into the iterator.
+ */
+#[derive(Debug)]
 pub struct Node {
     name: String,
     sets: Vec<RangeSet>,
@@ -112,11 +120,13 @@ pub fn node_to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>>
     Ok(v)
 }
 
+/* This regylar expression is used to capture each rangeset in a string defining a Node */
 lazy_static! {
     static ref RE: Regex = Regex::new(r"\[([\d,\-/]+)\]|([\d]+)").unwrap();
 }
 
 impl Node {
+    /// Counts the number of elements in Node's definition.
     pub fn amount(&self) -> u32 {
         if self.sets.is_empty() {
             if self.name.is_empty() {
@@ -133,9 +143,10 @@ impl Node {
         }
     }
 
-    /// Captures with regex all possible (and non overlapping) rangeset in the node name
-    /// for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
-    /// It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2
+    /* Captures with regex all possible (and non overlapping) rangeset in the node name
+     * for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
+     * It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2
+     */
     fn capture_with_regex(nodename: &str) -> Result<(String, Vec<String>), NodeErrorType> {
         let mut rangesets: Vec<String> = Vec::new();
         let mut name = nodename.to_string();
@@ -159,7 +170,7 @@ impl Node {
         Ok((name, rangesets))
     }
 
-    /* Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-2]core[1-64]" or node01 */
+    /// Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-2]core[1-64]" or "node01"
     pub fn new(str: &str) -> Result<Node, NodeErrorType> {
         let (name, rangesets) = Node::capture_with_regex(str)?;
         let mut sets: Vec<RangeSet> = Vec::new();
@@ -214,8 +225,7 @@ impl Node {
     }
 }
 
-/// Range and Rangeset iterator returns an already padded String
-/// but get_next() method doesn't.
+/// Iterator implementation for Node to allow one to use `for n in node {...}` construction.
 impl Iterator for Node {
     type Item = String;
 
@@ -247,7 +257,7 @@ impl Iterator for Node {
     }
 }
 
-/// Display trait for Node. It will display the node in a folded way
+/// Display trait for Node. It will display the node in a folded way (node[1-9/2,98])
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut nodestr: &str = self.name.as_str();
@@ -263,6 +273,8 @@ impl fmt::Display for Node {
         write!(f, "{}", nodestr)
     }
 }
+
+/*********************************** Tests ***********************************/
 
 #[cfg(test)] /* Helper function for testing */
 fn get_node_values_from_str(node_str: &str) -> Vec<String> {

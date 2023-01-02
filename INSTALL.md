@@ -23,10 +23,4 @@ cargo build --release
 This will compile all needed dependencies and at last will
 produce a binary program in `target/release/` named `ns`.
 For now it serves as a testing program for the library
-implementation and does nothing useful.
-
-## Usage
-
-
-## Related links
-
+implementation.

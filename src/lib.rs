@@ -21,6 +21,11 @@
  */
 #![doc = include_str!("../README.md")]
 
+/// module to manage node(s). Expanding for instance `node[1-4]` to `node1 node2 node3 node4`
 pub mod node;
+
+/// module to manage range such as `1-4` or `1` or even `30-0/4`
 pub mod range;
+
+/// module to manage a set of range called rangeset such as `1-4,8-14/2,50`
 pub mod rangeset;
