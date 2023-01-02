@@ -23,6 +23,8 @@
 use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt;
+
+#[cfg(test)]
 use std::process::exit; //used for testing
 
 /// A range is composed of ordered numbers (at least one)

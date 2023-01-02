@@ -31,7 +31,7 @@ use clap::{Args, Parser, Subcommand};
 /// * 0-30/4
 /// Between '[]' a Set
 /// A global name 'rack{}node{}.panel{}' and a vector of sets.
-use nodeset::node::Node;
+use nodeset::node::{node_to_vec_string, Node};
 use std::error::Error;
 use std::process::exit;
 
@@ -98,22 +98,10 @@ fn count(count: &Count) {
     }
 }
 
-fn to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let node = match Node::new(&node_str) {
-        Ok(n) => n,
-        Err(e) => return Err(Box::new(e)),
-    };
-    let mut v: Vec<String> = Vec::new();
-    for n in node {
-        v.push(format!("{}", n).to_string());
-    }
-    Ok(v)
-}
-
 fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
     let separator = &expand.separator;
     for node_str in &expand.nodesets {
-        let v = to_vec_string(node_str)?;
+        let v = node_to_vec_string(node_str)?;
         let len = v.len();
         for (i, n) in v.iter().enumerate() {
             if i == len - 1 {
@@ -122,6 +110,7 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
                 print!("{}{}", n, separator);
             }
         }
+        print!("{}", separator);
     }
     println!();
     Ok(())

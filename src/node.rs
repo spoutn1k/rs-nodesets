@@ -25,6 +25,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
+
+#[cfg(test)]
 use std::process::exit; // used for testing
 
 /// A Node is a name that may contain multiple RangeSets and
@@ -37,8 +39,6 @@ use std::process::exit; // used for testing
 /// ```rust
 ///
 /// use nodeset::node::Node;
-/// use nodeset::range::Range;
-/// use nodeset::rangeset::RangeSet;
 /// use std::process::exit;
 /// let node = match Node::new("r1esw[2-6]") {
 ///     Ok(n) => n,
@@ -50,8 +50,9 @@ use std::process::exit; // used for testing
 /// let v: Vec<_> = node.into_iter().map(|x| x).collect();
 /// assert_eq!(v, ["r1esw2", "r1esw3", "r1esw4", "r1esw5", "r1esw6"]);
 /// ```
-///
-///
+/// Note : to transform a node into a vector of Strings you may
+///        prefer to use `node_to_vec_string()` function.
+
 /// Structure used to keep Node definition.
 #[derive(Debug)] /* Auto generates Debug trait */
 pub struct Node {
@@ -93,6 +94,22 @@ impl Error for NodeErrorType {
             NodeErrorType::Regular(ref err) => err.as_str(),
         }
     }
+}
+
+/// Transforms a nodeset (String) into a vector of nodes (String)
+/// ```rust
+/// use nodeset::node::{node_to_vec_string};
+///
+/// let v = node_to_vec_string("r1esw[2-6]").unwrap();
+/// assert_eq!(v, ["r1esw2", "r1esw3", "r1esw4", "r1esw5", "r1esw6"]);
+/// ```
+pub fn node_to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    let node = match Node::new(&node_str) {
+        Ok(n) => n,
+        Err(e) => return Err(Box::new(e)),
+    };
+    let v: Vec<String> = node.into_iter().map(|x| x).collect();
+    Ok(v)
 }
 
 lazy_static! {

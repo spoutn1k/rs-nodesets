@@ -24,6 +24,8 @@ use crate::range::Range;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
+
+#[cfg(test)]
 use std::process::exit; //used for testing
 
 /// A RangeSet is a vector of Range.
