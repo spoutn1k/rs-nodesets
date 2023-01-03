@@ -167,13 +167,12 @@ impl Range {
         /* 100 099 098...                                                */
         let start = start_str.parse()?;
         let end = end_str.parse()?;
-        let pad: usize;
 
-        if start <= end {
-            pad = guess_padding(start_str)?;
+        let pad: usize = if start <= end {
+            guess_padding(start_str)?
         } else {
-            pad = guess_padding(end_str)?;
-        }
+            guess_padding(end_str)?
+        };
 
         let curr = start;
 

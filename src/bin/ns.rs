@@ -80,7 +80,7 @@ struct Fold {
 fn count(count: &Count) {
     let mut total = 0;
     for node_str in &count.nodesets {
-        let node = match Node::new(&node_str) {
+        let node = match Node::new(node_str) {
             Ok(n) => n,
             Err(e) => {
                 println!("Error: {}", e);
@@ -118,7 +118,7 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
 
 fn fold(fold: &Fold) {
     for node_str in &fold.nodesets {
-        let node = match Node::new(&node_str) {
+        let node = match Node::new(node_str) {
             Ok(n) => n,
             Err(e) => {
                 println!("Error: {}", e);
@@ -138,13 +138,10 @@ fn main() {
             count(c);
         }
         Commands::Expand(e) => {
-            match expand(e) {
-                Err(e) => {
-                    println!("Error: {}", e);
-                    exit(1);
-                }
-                _ => (),
-            };
+            if let Err(e) = expand(e) {
+                println!("Error: {}", e);
+                exit(1);
+            }
         }
         Commands::Fold(f) => {
             fold(f);

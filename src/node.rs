@@ -113,11 +113,11 @@ impl Error for NodeErrorType {
 /// assert_eq!(v, ["r1esw2", "r1esw3", "r1esw4", "r1esw5", "r1esw6"]);
 /// ```
 pub fn node_to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    let node = match Node::new(&node_str) {
+    let node = match Node::new(node_str) {
         Ok(n) => n,
         Err(e) => return Err(Box::new(e)),
     };
-    let v: Vec<String> = node.into_iter().map(|x| x).collect();
+    let v: Vec<String> = node.into_iter().collect();
     Ok(v)
 }
 
@@ -156,9 +156,8 @@ impl Node {
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {
-                    match capture.get(2) {
-                        Some(text) => rangesets.push(text.as_str().to_string()),
-                        None => (),
+                    if let Some(text) = capture.get(2) {
+                        rangesets.push(text.as_str().to_string())
                     };
                 }
             };
@@ -272,9 +271,7 @@ impl FromStr for Node {
 /// account. Nodes are equal if name is equal and all RangeSets
 /// are equal in the same order (order matters).
 impl PartialEq for Node {
-
     fn eq(&self, other: &Self) -> bool {
-
         if self.name != other.name {
             return false;
         }
@@ -328,19 +325,19 @@ fn get_node_values_from_str(node_str: &str) -> Vec<String> {
 
 #[test]
 fn testing_creating_node() {
-    let node:Node = "node[1-10]".parse().unwrap();
+    let node: Node = "node[1-10]".parse().unwrap();
     let rangeset = RangeSet::new("1-10").unwrap();
     assert_eq!(
         node,
         Node {
             name: "node{}".to_string(),
             sets: vec![rangeset],
-            values: vec![(0,0)],
+            values: vec![(0, 0)],
             first: false
         }
     );
 
-    let node:Node = "node[1-10]-cpu[1,2]-core[1-32,34-64]".parse().unwrap();
+    let node: Node = "node[1-10]-cpu[1,2]-core[1-32,34-64]".parse().unwrap();
     let rangeset_a = RangeSet::new("1-10").unwrap();
     let rangeset_b = RangeSet::new("1,2").unwrap();
     let rangeset_c = RangeSet::new("1-32,34-64").unwrap();
@@ -349,11 +346,11 @@ fn testing_creating_node() {
         Node {
             name: "node{}-cpu{}-core{}".to_string(),
             sets: vec![rangeset_a, rangeset_b, rangeset_c],
-            values: vec![(0,0), (0,0), (0,0)],
+            values: vec![(0, 0), (0, 0), (0, 0)],
             first: false
         }
     );
-    let node:Node = "node[1-10]-cpu[1-2]-core[1-32,34-64]".parse().unwrap();
+    let node: Node = "node[1-10]-cpu[1-2]-core[1-32,34-64]".parse().unwrap();
     let rangeset_a = RangeSet::new("1-10").unwrap();
     let rangeset_b = RangeSet::new("1-2").unwrap();
     let rangeset_c = RangeSet::new("1-32,34-64").unwrap();
@@ -362,7 +359,7 @@ fn testing_creating_node() {
         Node {
             name: "node{}-cpu{}-core{}".to_string(),
             sets: vec![rangeset_c, rangeset_b, rangeset_a],
-            values: vec![(0,0), (0,0), (0,0)],
+            values: vec![(0, 0), (0, 0), (0, 0)],
             first: false
         }
     );

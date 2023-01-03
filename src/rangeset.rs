@@ -169,7 +169,6 @@ impl FromStr for RangeSet {
 /// account. A RangeSet is equal to another one when all ranges are
 /// equal to each others in the same order (order matters).
 impl PartialEq for RangeSet {
-
     fn eq(&self, other: &Self) -> bool {
         let mut ok: bool = true;
         if self.set.len() == other.set.len() {
@@ -226,8 +225,8 @@ fn testing_creating_rangeset() {
     assert_eq!(
         rangeset,
         RangeSet {
-        set: vec![range],
-        curr: 0
+            set: vec![range],
+            curr: 0
         }
     );
 
@@ -238,8 +237,8 @@ fn testing_creating_rangeset() {
     assert_eq!(
         rangeset,
         RangeSet {
-        set: vec![range_a, range_b, range_c],
-        curr: 0
+            set: vec![range_a, range_b, range_c],
+            curr: 0
         }
     );
 
@@ -250,8 +249,8 @@ fn testing_creating_rangeset() {
     assert_ne!(
         rangeset,
         RangeSet {
-        set: vec![range_b, range_a, range_c],
-        curr: 0
+            set: vec![range_b, range_a, range_c],
+            curr: 0
         }
     );
 }
