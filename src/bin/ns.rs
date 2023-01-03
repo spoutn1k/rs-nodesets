@@ -126,6 +126,7 @@ fn fold(fold: &Fold) {
             }
         };
         println!("{}", node);
+        println!("{:?}", node);
     }
 }
 

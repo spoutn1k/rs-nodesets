@@ -164,6 +164,25 @@ impl FromStr for RangeSet {
     }
 }
 
+/// PartialEq trait for RangeSet to know if a rangeSet is equal or not
+/// to another rangeSet. curr (Iterator's position) is not taken into
+/// account. A RangeSet is equal to another one when all ranges are
+/// equal to each others in the same order (order matters).
+impl PartialEq for RangeSet {
+
+    fn eq(&self, other: &Self) -> bool {
+        let mut ok: bool = true;
+        if self.set.len() == other.set.len() {
+            for i in 0..self.set.len() {
+                ok = ok && self.set[i] == other.set[i]
+            }
+            ok
+        } else {
+            false
+        }
+    }
+}
+
 /// Display trait for RangeSet. It will display the RangeSet in a folded way
 impl fmt::Display for RangeSet {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -198,6 +217,43 @@ fn get_rangeset_values_from_str(rangeset_str: &str) -> Vec<String> {
         v.push(r);
     }
     v
+}
+
+#[test]
+fn testing_creating_rangeset() {
+    let rangeset = RangeSet::new("1-10").unwrap();
+    let range = Range::new("1-10").unwrap();
+    assert_eq!(
+        rangeset,
+        RangeSet {
+        set: vec![range],
+        curr: 0
+        }
+    );
+
+    let rangeset = RangeSet::new("1,2,3-10").unwrap();
+    let range_a = Range::new("1").unwrap();
+    let range_b = Range::new("2").unwrap();
+    let range_c = Range::new("3-10").unwrap();
+    assert_eq!(
+        rangeset,
+        RangeSet {
+        set: vec![range_a, range_b, range_c],
+        curr: 0
+        }
+    );
+
+    let rangeset = RangeSet::new("1,2,3-10").unwrap();
+    let range_a = Range::new("1").unwrap();
+    let range_b = Range::new("2").unwrap();
+    let range_c = Range::new("3-10").unwrap();
+    assert_ne!(
+        rangeset,
+        RangeSet {
+        set: vec![range_b, range_a, range_c],
+        curr: 0
+        }
+    );
 }
 
 #[test]

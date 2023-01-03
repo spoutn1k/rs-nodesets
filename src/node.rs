@@ -267,6 +267,29 @@ impl FromStr for Node {
     }
 }
 
+/// PartialEq trait for Node to know if a Node is equal or not
+/// to another Node. curr (Iterator's position) is not taken into
+/// account. Nodes are equal if name is equal and all RangeSets
+/// are equal in the same order (order matters).
+impl PartialEq for Node {
+
+    fn eq(&self, other: &Self) -> bool {
+
+        if self.name != other.name {
+            return false;
+        }
+
+        let mut ok: bool = true;
+        if self.sets.len() == other.sets.len() {
+            for i in 0..self.sets.len() {
+                ok = ok && self.sets[i] == other.sets[i]
+            }
+            ok
+        } else {
+            false
+        }
+    }
+}
 
 /// Display trait for Node. It will display the node in a folded way (node[1-9/2,98])
 impl fmt::Display for Node {
@@ -301,6 +324,48 @@ fn get_node_values_from_str(node_str: &str) -> Vec<String> {
         v.push(n);
     }
     v
+}
+
+#[test]
+fn testing_creating_node() {
+    let node:Node = "node[1-10]".parse().unwrap();
+    let rangeset = RangeSet::new("1-10").unwrap();
+    assert_eq!(
+        node,
+        Node {
+            name: "node{}".to_string(),
+            sets: vec![rangeset],
+            values: vec![(0,0)],
+            first: false
+        }
+    );
+
+    let node:Node = "node[1-10]-cpu[1,2]-core[1-32,34-64]".parse().unwrap();
+    let rangeset_a = RangeSet::new("1-10").unwrap();
+    let rangeset_b = RangeSet::new("1,2").unwrap();
+    let rangeset_c = RangeSet::new("1-32,34-64").unwrap();
+    assert_eq!(
+        node,
+        Node {
+            name: "node{}-cpu{}-core{}".to_string(),
+            sets: vec![rangeset_a, rangeset_b, rangeset_c],
+            values: vec![(0,0), (0,0), (0,0)],
+            first: false
+        }
+    );
+    let node:Node = "node[1-10]-cpu[1-2]-core[1-32,34-64]".parse().unwrap();
+    let rangeset_a = RangeSet::new("1-10").unwrap();
+    let rangeset_b = RangeSet::new("1-2").unwrap();
+    let rangeset_c = RangeSet::new("1-32,34-64").unwrap();
+    assert_ne!(
+        node,
+        Node {
+            name: "node{}-cpu{}-core{}".to_string(),
+            sets: vec![rangeset_c, rangeset_b, rangeset_a],
+            values: vec![(0,0), (0,0), (0,0)],
+            first: false
+        }
+    );
 }
 
 #[test]
