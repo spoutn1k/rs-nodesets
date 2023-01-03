@@ -23,6 +23,7 @@
 use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt;
+use std::str::FromStr;
 
 #[cfg(test)]
 use std::process::exit; //used for testing
@@ -197,6 +198,15 @@ impl Iterator for Range {
         };
         let pad = self.pad;
         return Some(format!("{:0pad$}", curr));
+    }
+}
+
+/// FromStr trait lets you write: `let a_range: Range = "01-10/2".parse().unwrap();`
+impl FromStr for Range {
+    type Err = Box<dyn Error>;
+
+    fn from_str(strange: &str) -> Result<Self, Self::Err> {
+        Range::new(strange)
     }
 }
 

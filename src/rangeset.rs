@@ -24,6 +24,7 @@ use crate::range::Range;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
+use std::str::FromStr;
 
 #[cfg(test)]
 use std::process::exit; //used for testing
@@ -151,6 +152,15 @@ impl Iterator for RangeSet {
 
         let next = format!("{:0pad$}", next_u32);
         Some(next)
+    }
+}
+
+/// FromStr trait lets you write: `let a_rangeset: RangeSet = "01-10/2,15-30/3".parse().unwrap();`
+impl FromStr for RangeSet {
+    type Err = Box<dyn Error>;
+
+    fn from_str(strange: &str) -> Result<Self, Self::Err> {
+        RangeSet::new(strange)
     }
 }
 

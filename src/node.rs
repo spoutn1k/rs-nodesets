@@ -25,6 +25,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
+use std::str::FromStr;
 
 #[cfg(test)]
 use std::process::exit;
@@ -256,6 +257,16 @@ impl Iterator for Node {
         }
     }
 }
+
+/// FromStr trait lets you write: `let a_node: Node = "node[1-6]-socket[1-2]-core[1-64]".parse().unwrap();`
+impl FromStr for Node {
+    type Err = NodeErrorType;
+
+    fn from_str(node_str: &str) -> Result<Self, Self::Err> {
+        Node::new(node_str)
+    }
+}
+
 
 /// Display trait for Node. It will display the node in a folded way (node[1-9/2,98])
 impl fmt::Display for Node {
