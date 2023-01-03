@@ -1,6 +1,6 @@
 [package]
 name = "nodeset"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 authors = ["Olivier Delhomme <olivier.delhomme@free.fr>"]
 description = "NodeSet management library"
@@ -15,3 +15,9 @@ categories = ["command-line-utilities"]
 regex = "1.5.5"
 lazy_static = "1.4.0"
 clap = { version = "4.0.29", features = ["derive"] }
+
+
+[package.metadata.generate-rpm]
+name = "ns"
+release = 1
+assets = [ {source = "target/release/ns", dest = "/usr/bin/ns", mode = "0755"} ]
