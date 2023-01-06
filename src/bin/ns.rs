@@ -88,9 +88,9 @@ fn count(count: &Count) {
             }
         };
         if count.total {
-            total += node.amount();
+            total += node.len();
         } else {
-            println!("{}", node.amount());
+            println!("{}", node.len());
         }
     }
     if count.total {

@@ -3,7 +3,7 @@
 ## Description
 
 nodeset is a library and a program (`ns`) to manage nodesets written in Rust.
-As of now one can iterate over nodes, count (`amount()` method) them, display
+As of now one can iterate over nodes, count (`len()` method) them, display
 in a folded way :
 
 ```rust
@@ -20,7 +20,7 @@ in a folded way :
     println!("Node string display : {}", "r[1-10/2,15]esw[2-8]");
     println!("Node normal display : {}", node);
     println!("Node debug display  : {:?}", node);
-    println!("Node count          : {}", node.amount());
+    println!("Node count          : {}", node.len());
 
     // use of the iterator
     for n in node {

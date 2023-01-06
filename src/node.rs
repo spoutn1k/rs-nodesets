@@ -79,12 +79,14 @@ pub enum NodeErrorType {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ErrorKind {
     RegexNoMatch,
+    RangeSetCreation,
 }
 
 impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
             ErrorKind::RegexNoMatch => "no match found in string",
+            ErrorKind::RangeSetCreation => "unable to create rangeset"
         }
     }
 }
@@ -128,7 +130,7 @@ lazy_static! {
 
 impl Node {
     /// Counts the number of elements in Node's definition.
-    pub fn amount(&self) -> u32 {
+    pub fn len(&self) -> u32 {
         if self.sets.is_empty() {
             if self.name.is_empty() {
                 0
@@ -138,10 +140,14 @@ impl Node {
         } else {
             let mut total = 1;
             for r in self.sets.iter() {
-                total *= r.amount();
+                total *= r.len();
             }
             total
         }
+    }
+    /// Tells wether a Node is empty or not.
+    pub fn is_empty(&self) -> bool {
+        self.sets.is_empty() && self.name.is_empty()
     }
 
     /* Captures with regex all possible (and non overlapping) rangeset in the node name
@@ -178,7 +184,7 @@ impl Node {
         for set in rangesets {
             let rangeset = match RangeSet::new(&set) {
                 Ok(r) => r,
-                Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RegexNoMatch)),
+                Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RangeSetCreation)),
             };
             sets.push(rangeset);
             values.push((0, 0));

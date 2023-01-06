@@ -2,7 +2,7 @@
  *
  *  range.rs: Implements all logic and structures to manage Range
  *
- *  (C) Copyright 2022 Olivier Delhomme
+ *  (C) Copyright 2022 - 2023 Olivier Delhomme
  *  e-mail : olivier.delhomme@free.fr
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -105,12 +105,18 @@ impl Range {
     }
 
     /// counts the number of values in the Range
-    pub fn amount(&self) -> u32 {
+    pub fn len(&self) -> u32 {
         match self.start.cmp(&self.end) {
             Ordering::Greater => 1 + ((self.start - self.end) / self.step),
             Ordering::Less => 1 + ((self.end - self.start) / self.step),
             Ordering::Equal => 1,
         }
+    }
+
+    /// An existing range can not be empty -> this function
+    /// always returns false
+    pub fn is_empty(&self) -> bool {
+        false
     }
 
     /// This function is for internal use of the library.

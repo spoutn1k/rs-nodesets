@@ -1,0 +1,5 @@
+
+0.4.0
+
+* Changes .amount() functions to .len() that are more idiomatic
+* Adds .is_empty() functions

@@ -73,16 +73,21 @@ impl RangeSet {
     }
 
     /// Counts the number of elements in the rangeset
-    pub fn amount(&self) -> u32 {
+    pub fn len(&self) -> u32 {
         if self.set.is_empty() {
             0
         } else {
             let mut total = 0;
             for r in self.set.iter() {
-                total += r.amount();
+                total += r.len();
             }
             total
         }
+    }
+
+    /// Tells wether a RangeSet is empty or not.
+    pub fn is_empty(&self) -> bool {
+        self.set.is_empty()
     }
 
     pub fn get_next(&mut self) -> Option<(u32, usize)> {
