@@ -86,7 +86,7 @@ impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
             ErrorKind::RegexNoMatch => "no match found in string",
-            ErrorKind::RangeSetCreation => "unable to create rangeset"
+            ErrorKind::RangeSetCreation => "unable to create rangeset",
         }
     }
 }
@@ -145,7 +145,7 @@ impl Node {
             total
         }
     }
-    /// Tells wether a Node is empty or not.
+    /// Tells whether a Node is empty or not.
     pub fn is_empty(&self) -> bool {
         self.sets.is_empty() && self.name.is_empty()
     }

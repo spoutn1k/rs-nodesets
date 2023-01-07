@@ -80,6 +80,21 @@ pub fn guess_padding(value: &str) -> Result<usize, Box<dyn Error>> {
     }
 }
 
+fn step_detection(vector: Vec<u32>) -> u32 {
+    let step: u32;
+
+    if vector.len() > 1 {
+        if vector[0] < vector[1] {
+            step = vector[1] - vector[0];
+        } else {
+            step = vector[0] - vector[1];
+        }
+    } else {
+        step = 1;
+    }
+    step
+}
+
 impl Range {
     /// True when start range is the same as end ie: this range
     /// has only one number.
@@ -126,6 +141,92 @@ impl Range {
         self.curr
     }
 
+    /// tells whether the Range is in reverse order
+    /// or not
+    pub fn is_reverse_order(&self) -> bool {
+        self.start > self.end
+    }
+
+    pub fn new_range_reversed(&self) -> Range {
+        Range {
+            start: self.end,
+            end: self.start,
+            step: self.step,
+            pad: self.pad,
+            curr: self.curr,
+        }
+    }
+
+    fn generate_vec_u32(&self) -> Vec<u32> {
+        let mut vector: Vec<u32> = Vec::new();
+        let mut index: u32;
+
+        if self.is_reverse_order() {
+            index = self.start;
+            while index >= self.end {
+                vector.push(index);
+                index = index - self.step;
+            }
+        } else {
+            index = self.start;
+            while index <= self.end {
+                vector.push(index);
+                index = index + self.step;
+            }
+        }
+
+        vector
+    }
+
+    /// Returns a new Range that is the intersection or None
+    /// order (reverse or not) is not kept in the new Range
+    /// an is always forward
+    pub fn intersection(&self, other: &Self) -> Option<Range> {
+        let mut inter: Vec<u32> = Vec::new();
+        let mut first: Vec<u32> = self.generate_vec_u32();
+        let mut second: Vec<u32> = other.generate_vec_u32();
+
+        first.sort_unstable();
+        second.sort_unstable();
+
+        println!("first: {:?}", first);
+        println!("second: {:?}", second);
+
+        let mut i1 = 0;
+        let mut i2 = 0;
+        while i1 < first.len() && i2 < second.len() {
+            println!("i1:{} i2: {}", i1, i2);
+            if first[i1] == second[i2] {
+                inter.push(first[i1]);
+                i1 += 1;
+                i2 += 1;
+            } else if first[i1] > second[i2] {
+                i2 += 1;
+            } else {
+                i1 += 1
+            }
+        }
+
+        println!("inter: {:?}", inter);
+        if inter.len() > 0 {
+            let start = inter[0];
+            let last = inter.len() - 1;
+            let end = inter[last];
+            let pad = self.pad.max(other.pad);
+            let step = step_detection(inter);
+
+            Some(Range {
+                start,
+                end,
+                pad,
+                curr: start,
+                step,
+            })
+        } else {
+            None
+        }
+    }
+
     /// Returns the next value as an `Option<u32>`.
     /// It returns None when there is no next value to
     /// get. Note that Range implements Iterator trait
@@ -133,7 +234,7 @@ impl Range {
     pub fn get_next(&mut self) -> Option<u32> {
         let curr = self.curr;
 
-        if self.start > self.end {
+        if self.is_reverse_order() {
             /* going backward here */
             if curr < self.end {
                 return None;
@@ -332,4 +433,82 @@ fn testing_range_values() {
 
     let value = get_range_values_from_str("42-38");
     assert_eq!(value, vec!["42", "41", "40", "39", "38"]);
+}
+
+#[test]
+fn testing_range_intersection() {
+    let range_a: Range = "1-14/4".parse().unwrap();
+    // 1 5 9 14
+    let range_b: Range = "3-20/2".parse().unwrap();
+    // 3 5 7 9 11 13 15 17 19
+    let inter = range_a.intersection(&range_b);
+    // 5 9 13
+    assert_eq!(
+        inter,
+        Some(Range {
+            start: 5,
+            end: 13,
+            step: 4,
+            pad: 0,
+            curr: 5
+        })
+    );
+
+    let range_a: Range = "38-44".parse().unwrap();
+    // 38 39 40 41 42 43 44
+    let range_b: Range = "40-36".parse().unwrap();
+    // 40 30 38 37 36
+    let inter = range_a.intersection(&range_b);
+    // 38 39 40
+    assert_eq!(
+        inter,
+        Some(Range {
+            start: 38,
+            end: 40,
+            step: 1,
+            pad: 0,
+            curr: 38
+        })
+    );
+
+    let range_a: Range = "1-20/2".parse().unwrap();
+    // 1 3 5 7 ...
+    let range_b: Range = "2-20/2".parse().unwrap();
+    // 2 4 6 8 9 ...
+    let inter = range_a.intersection(&range_b);
+    assert_eq!(inter, None);
+
+    let range_a: Range = "2-20/2".parse().unwrap();
+    // 38 39 40 41 42 43 44
+    let range_b: Range = "20-40/2".parse().unwrap();
+    // 40 30 38 37 36
+    let inter = range_a.intersection(&range_b);
+    // 20
+    assert_eq!(
+        inter,
+        Some(Range {
+            start: 20,
+            end: 20,
+            step: 1,
+            pad: 0,
+            curr: 20
+        })
+    );
+
+    let range_a: Range = "02-40/2".parse().unwrap();
+    // 02 04 06 08 ... 36 38 40
+    let range_b: Range = "60-20/3".parse().unwrap();
+    // 60 57 54 51 ... 27 24 21
+    let inter = range_a.intersection(&range_b);
+    // 24 30 36
+    assert_eq!(
+        inter,
+        Some(Range {
+            start: 24,
+            end: 36,
+            step: 6,
+            pad: 2,
+            curr: 20
+        })
+    );
 }

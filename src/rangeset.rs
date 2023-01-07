@@ -85,7 +85,7 @@ impl RangeSet {
         }
     }
 
-    /// Tells wether a RangeSet is empty or not.
+    /// Tells whether a RangeSet is empty or not.
     pub fn is_empty(&self) -> bool {
         self.set.is_empty()
     }
