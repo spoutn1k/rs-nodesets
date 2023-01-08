@@ -20,7 +20,7 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-use crate::range::Range;
+use crate::range::{Range, vec_u32_intersection};
 use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
@@ -51,6 +51,54 @@ pub struct RangeSet {
     set: Vec<Range>,
     curr: usize,
 }
+
+
+// Should not be called with an empty vector
+// vector must me sorted
+fn rangeset_range_detection(v: Vec<u32>, pad: usize) -> Vec<Range> {
+
+    let mut index = 0;
+    let mut res: Vec<Range> = Vec::new();
+
+    if v.len() == 1 {
+        let range = Range::new_from_values(v[0] , v[0], 1,  pad, v[0]);
+        res.push(range);
+        res
+    } else {
+        let mut step = v[index + 1] - v[index];
+        let mut diff;
+        let mut start = v[index];
+        while index + 1 < v.len() {
+            // vector is sorted
+            println!("{index}");
+            while index + 2 < v.len() {
+                diff = v[index + 2] - v[index + 1];
+                if step != diff {
+                    let end = v[index + 1];
+                    let range = Range::new_from_values(start, end, step, pad, start);
+                    res.push(range);
+                    start = v[index + 2];
+                    if index + 3 < v.len() {
+                        step = v[index + 3] - v[index + 2];
+                    } else {
+                        step = 1;
+                    }
+                    break;
+                } else {
+                    index += 1;
+                }
+            }
+            index += 1;
+        }
+
+        let end = v[index];
+        let range = Range::new_from_values(start, end, step, pad, start);
+        res.push(range);
+        res
+    }
+}
+
+
 
 impl RangeSet {
     /// True when we only have one member and not a set ie: node003
@@ -88,6 +136,47 @@ impl RangeSet {
     /// Tells whether a RangeSet is empty or not.
     pub fn is_empty(&self) -> bool {
         self.set.is_empty()
+    }
+
+    /// Intersection of all range that compose all the RangeSet
+    ///  "1,3-5,89"  "9-2,101,2-8/2
+    // pub struct RangeSet {
+    //    set: Vec<Range>,
+    //    curr: usize,
+    //}
+    pub fn intersection(&self, other: &Self) -> Option<RangeSet> {
+
+//        let mut inter: RangeSet = RangeSet::empty();
+//        let mut range;
+
+        if self.is_empty() {
+            return Some(RangeSet{set: other.set.clone(), curr: other.curr});
+        } else if other.is_empty() {
+            return Some(RangeSet{set: self.set.clone(), curr: self.curr});
+        }
+        // here self and other are not empty so we get at least
+        // 2 vectors.
+
+        let mut first: Vec<u32> = Vec::new();
+        let mut second: Vec<u32> = Vec::new();
+
+        for r in &self.set {
+            let mut v = r.generate_vec_u32();
+            first.append(& mut v);
+        }
+        for r in &other.set {
+            let mut v = r.generate_vec_u32();
+            second.append(& mut v);
+        }
+
+        if let Some(inter) = vec_u32_intersection(first, second) {
+            println!("{:?}", inter);
+            let range_vec = rangeset_range_detection(inter, 0);
+            println!("{:?}", range_vec);
+            Some(RangeSet {set: range_vec, curr: 0})
+        } else {
+            None
+        }
     }
 
     pub fn get_next(&mut self) -> Option<(u32, usize)> {
@@ -273,4 +362,34 @@ fn testing_rangeset_values() {
 
     let value = get_rangeset_values_from_str("01-10,7-12/2");
     assert_eq!(value, vec!["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "7", "9", "11"]);
+}
+
+#[test]
+fn testing_rangeset_intersection() {
+    let rs_a:RangeSet = "1,3-5,89".parse().unwrap();
+    // "1", "3", "4", "5", "89"
+    let rs_b:RangeSet = "9-2,101,2-8/2,89".parse().unwrap();
+    // "9", "8", "7", "6", "5", "4", "3", "2", "101", "2", "4", "6", "8", "89"
+
+    let inter = rs_a.intersection(&rs_b);
+    let range_a = Range::new("3-5").unwrap();
+    let range_b = Range::new("89").unwrap();
+    println!("{:?}", inter);
+    assert_eq!(
+        inter,
+        Some(RangeSet { set : vec![range_a, range_b], curr: 0 }));
+
+
+    let rs_a:RangeSet = "10-01/2,32-72/4".parse().unwrap();
+    // "10", "08", "06", "04", "02", "32", "36", "40", "44", "48", "52", "56", "60", "64", "68", "72"
+    let rs_b:RangeSet = "01-10,7-12/2,50-60/2".parse().unwrap();
+    // "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "7", "9", "11"
+
+    let inter = rs_a.intersection(&rs_b);
+    let range_a = Range::new("2-10/2").unwrap();
+    let range_b = Range::new("52-60/4").unwrap();
+    println!("{:?}", inter);
+    assert_eq!(
+        inter,
+        Some(RangeSet { set : vec![range_a, range_b], curr: 0 }));
 }

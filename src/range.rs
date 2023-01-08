@@ -57,7 +57,7 @@ use std::process::exit; //used for testing
  * * `curr` is used to remember the current value when calculating next
  *          number in Range iterator's implementation.
  */
-#[derive(Debug)] /* Auto generates Debug trait */
+#[derive(Debug, Clone)] /* Auto generates Debug and Clone traits */
 pub struct Range {
     start: u32,
     end: u32,
@@ -80,7 +80,7 @@ pub fn guess_padding(value: &str) -> Result<usize, Box<dyn Error>> {
     }
 }
 
-fn step_detection(vector: Vec<u32>) -> u32 {
+fn range_step_detection(vector: Vec<u32>) -> u32 {
     let step: u32;
 
     if vector.len() > 1 {
@@ -94,6 +94,43 @@ fn step_detection(vector: Vec<u32>) -> u32 {
     }
     step
 }
+
+pub fn vec_u32_intersection(first: Vec<u32>, second: Vec<u32>) -> Option<Vec<u32>> {
+        let mut inter: Vec<u32> = Vec::new();
+        let mut first: Vec<u32> = first;
+        let mut second: Vec<u32> = second;
+
+        first.sort_unstable();
+        second.sort_unstable();
+
+        //println!("first: {:?}", first);
+        //println!("second: {:?}", second);
+
+        let mut i1 = 0;
+        let mut i2 = 0;
+        while i1 < first.len() && i2 < second.len() {
+            //println!("i1:{} i2: {}", i1, i2);
+            if first[i1] == second[i2] {
+                inter.push(first[i1]);
+                i1 += 1;
+                i2 += 1;
+            } else if first[i1] > second[i2] {
+                i2 += 1;
+            } else {
+                i1 += 1
+            }
+        }
+
+        //println!("inter: {:?}", inter);
+        if inter.len() > 0 {
+            Some(inter)
+        } else {
+            None
+        }
+
+}
+
+
 
 impl Range {
     /// True when start range is the same as end ie: this range
@@ -157,7 +194,7 @@ impl Range {
         }
     }
 
-    fn generate_vec_u32(&self) -> Vec<u32> {
+    pub fn generate_vec_u32(&self) -> Vec<u32> {
         let mut vector: Vec<u32> = Vec::new();
         let mut index: u32;
 
@@ -181,49 +218,32 @@ impl Range {
     /// Returns a new Range that is the intersection or None
     /// order (reverse or not) is not kept in the new Range
     /// an is always forward
+    /// Step detection is always possible because we are in
+    /// an intersection of two ranges with stable step propriety
     pub fn intersection(&self, other: &Self) -> Option<Range> {
-        let mut inter: Vec<u32> = Vec::new();
         let mut first: Vec<u32> = self.generate_vec_u32();
         let mut second: Vec<u32> = other.generate_vec_u32();
 
         first.sort_unstable();
         second.sort_unstable();
 
-        println!("first: {:?}", first);
-        println!("second: {:?}", second);
+        match vec_u32_intersection(first, second) {
+            Some(inter) => {
+                let start = inter[0];
+                let last = inter.len() - 1;
+                let end = inter[last];
+                let pad = self.pad.max(other.pad);
+                let step = range_step_detection(inter);
 
-        let mut i1 = 0;
-        let mut i2 = 0;
-        while i1 < first.len() && i2 < second.len() {
-            println!("i1:{} i2: {}", i1, i2);
-            if first[i1] == second[i2] {
-                inter.push(first[i1]);
-                i1 += 1;
-                i2 += 1;
-            } else if first[i1] > second[i2] {
-                i2 += 1;
-            } else {
-                i1 += 1
-            }
-        }
-
-        println!("inter: {:?}", inter);
-        if inter.len() > 0 {
-            let start = inter[0];
-            let last = inter.len() - 1;
-            let end = inter[last];
-            let pad = self.pad.max(other.pad);
-            let step = step_detection(inter);
-
-            Some(Range {
-                start,
-                end,
-                pad,
-                curr: start,
-                step,
-            })
-        } else {
-            None
+                Some(Range {
+                    start,
+                    end,
+                    pad,
+                    curr: start,
+                    step,
+                })
+            },
+            None => None,
         }
     }
 
@@ -251,6 +271,17 @@ impl Range {
         }
         Some(curr)
     }
+
+    pub fn new_from_values(start: u32, end: u32, step:u32, pad:usize, curr:u32) -> Range {
+        Range {
+            start,
+            end,
+            step,
+            pad,
+            curr,
+        }
+    }
+
 
     /// Creates a new Range with an &str like "1-5/2" or "1" or "9-15"
     /// it may even be in reverse mode such as "15-9". Padding is
@@ -479,9 +510,9 @@ fn testing_range_intersection() {
     assert_eq!(inter, None);
 
     let range_a: Range = "2-20/2".parse().unwrap();
-    // 38 39 40 41 42 43 44
+    // 2 4 6 ... 16 18 20
     let range_b: Range = "20-40/2".parse().unwrap();
-    // 40 30 38 37 36
+    // 40 38 36 ... 24 22 20
     let inter = range_a.intersection(&range_b);
     // 20
     assert_eq!(
