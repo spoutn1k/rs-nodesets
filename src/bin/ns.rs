@@ -2,7 +2,7 @@
  *
  *  nodeset.rs: a binary to do some basic tests while developing
  *
- *  (C) Copyright 2022 Olivier Delhomme
+ *  (C) Copyright 2022 - 2023 Olivier Delhomme
  *  e-mail : olivier.delhomme@free.fr
  *
  *  This program is free software; you can redistribute it and/or modify

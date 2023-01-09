@@ -52,28 +52,40 @@ pub struct RangeSet {
     curr: usize,
 }
 
-
-// Should not be called with an empty vector
-// vector must me sorted
-fn rangeset_range_detection(v: Vec<u32>, pad: usize) -> Vec<Range> {
+// This function needs a non empty sorted Vector of u32.
+// It does fold every numbers in the vector into Ranges
+// that are put in a vector. This vector contains at
+// least one Range.
+// pad will be used for all Range in the new Vector
+fn fold_vec_u32_in_vec_range(v: Vec<u32>, pad: usize) -> Vec<Range> {
 
     let mut index = 0;
     let mut res: Vec<Range> = Vec::new();
 
     if v.len() == 1 {
+        // only one value in the vector leads to only one Range with
+        // start, end and curr at the same value and step to 1 (by convention)
         let range = Range::new_from_values(v[0] , v[0], 1,  pad, v[0]);
         res.push(range);
         res
     } else {
+        // we know that we have at least two values
+        // so index + 1 exists
         let mut step = v[index + 1] - v[index];
         let mut diff;
         let mut start = v[index];
         while index + 1 < v.len() {
-            // vector is sorted
-            println!("{index}");
+            // println!("{index}");
+            // If we have a third value ahead then begin the loop
+            // until the end or until the difference between two
+            // values changed
             while index + 2 < v.len() {
                 diff = v[index + 2] - v[index + 1];
                 if step != diff {
+                    // When the difference between the next two values is
+                    // not the same as the previous one, the range stops
+                    // here (and pushed in the result vector) and a new
+                    // one is started.
                     let end = v[index + 1];
                     let range = Range::new_from_values(start, end, step, pad, start);
                     res.push(range);
@@ -97,8 +109,6 @@ fn rangeset_range_detection(v: Vec<u32>, pad: usize) -> Vec<Range> {
         res
     }
 }
-
-
 
 impl RangeSet {
     /// True when we only have one member and not a set ie: node003
@@ -138,17 +148,11 @@ impl RangeSet {
         self.set.is_empty()
     }
 
-    /// Intersection of all range that compose all the RangeSet
-    ///  "1,3-5,89"  "9-2,101,2-8/2
-    // pub struct RangeSet {
-    //    set: Vec<Range>,
-    //    curr: usize,
-    //}
+    /// Intersection of self RangeSet with other RangeSet :
+    ///  `1,3-5,89` and `9-2,101,2-8/2`
     pub fn intersection(&self, other: &Self) -> Option<RangeSet> {
 
-//        let mut inter: RangeSet = RangeSet::empty();
-//        let mut range;
-
+        // special cases where self or other is empty
         if self.is_empty() {
             return Some(RangeSet{set: other.set.clone(), curr: other.curr});
         } else if other.is_empty() {
@@ -159,20 +163,23 @@ impl RangeSet {
 
         let mut first: Vec<u32> = Vec::new();
         let mut second: Vec<u32> = Vec::new();
+        let mut pad: usize = 0;
 
         for r in &self.set {
+            pad = pad.max(r.get_pad());
             let mut v = r.generate_vec_u32();
             first.append(& mut v);
         }
         for r in &other.set {
+            pad = pad.max(r.get_pad());
             let mut v = r.generate_vec_u32();
             second.append(& mut v);
         }
 
         if let Some(inter) = vec_u32_intersection(first, second) {
-            println!("{:?}", inter);
-            let range_vec = rangeset_range_detection(inter, 0);
-            println!("{:?}", range_vec);
+            //println!("{:?}", inter);
+            let range_vec = fold_vec_u32_in_vec_range(inter, pad);
+            //println!("{:?}", range_vec);
             Some(RangeSet {set: range_vec, curr: 0})
         } else {
             None
@@ -386,7 +393,7 @@ fn testing_rangeset_intersection() {
     // "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "7", "9", "11"
 
     let inter = rs_a.intersection(&rs_b);
-    let range_a = Range::new("2-10/2").unwrap();
+    let range_a = Range::new("02-10/2").unwrap();
     let range_b = Range::new("52-60/4").unwrap();
     println!("{:?}", inter);
     assert_eq!(

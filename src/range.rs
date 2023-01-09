@@ -95,6 +95,7 @@ fn range_step_detection(vector: Vec<u32>) -> u32 {
     step
 }
 
+/// returns the intersection of two u32 vectors or None
 pub fn vec_u32_intersection(first: Vec<u32>, second: Vec<u32>) -> Option<Vec<u32>> {
         let mut inter: Vec<u32> = Vec::new();
         let mut first: Vec<u32> = first;
@@ -122,15 +123,12 @@ pub fn vec_u32_intersection(first: Vec<u32>, second: Vec<u32>) -> Option<Vec<u32
         }
 
         //println!("inter: {:?}", inter);
-        if inter.len() > 0 {
+        if !inter.is_empty() {
             Some(inter)
         } else {
             None
         }
-
 }
-
-
 
 impl Range {
     /// True when start range is the same as end ie: this range
@@ -194,6 +192,8 @@ impl Range {
         }
     }
 
+    /// Expands a Range into a vector of u32.
+    /// Order is taken into account.
     pub fn generate_vec_u32(&self) -> Vec<u32> {
         let mut vector: Vec<u32> = Vec::new();
         let mut index: u32;
@@ -202,22 +202,22 @@ impl Range {
             index = self.start;
             while index >= self.end {
                 vector.push(index);
-                index = index - self.step;
+                index -= self.step;
             }
         } else {
             index = self.start;
             while index <= self.end {
                 vector.push(index);
-                index = index + self.step;
+                index -= self.step;
             }
         }
 
         vector
     }
 
-    /// Returns a new Range that is the intersection or None
-    /// order (reverse or not) is not kept in the new Range
-    /// an is always forward
+    /// Returns a new Range that is the intersection or None.
+    /// Order (reverse or not) is not kept in the new Range
+    /// and is always forward
     /// Step detection is always possible because we are in
     /// an intersection of two ranges with stable step propriety
     pub fn intersection(&self, other: &Self) -> Option<Range> {
@@ -272,6 +272,9 @@ impl Range {
         Some(curr)
     }
 
+    /// Creates a new Range directly from the values
+    /// that defines it: `start-end/step`
+    /// pad is the minimal number of number needed: `2` with `Pad = 3` is `002`
     pub fn new_from_values(start: u32, end: u32, step:u32, pad:usize, curr:u32) -> Range {
         Range {
             start,
@@ -283,8 +286,8 @@ impl Range {
     }
 
 
-    /// Creates a new Range with an &str like "1-5/2" or "1" or "9-15"
-    /// it may even be in reverse mode such as "15-9". Padding is
+    /// Creates a new Range with an &str like `1-5/2` or `1` or `9-15`
+    /// it may even be in reverse mode such as `15-9`. Padding is
     /// guessed in either mode.
     pub fn new(strange: &str) -> Result<Range, Box<dyn Error>> {
         /* Try to figure out if we have a base/step formatted range */
@@ -370,7 +373,7 @@ impl fmt::Display for Range {
 
 /// PartialEq trait for Range to know if a range is equal or not
 /// to another range.
-/// padding is not taken into account ie 1-100/2 equals 001-100/2
+/// padding is not taken into account ie `1-100/2` equals `001-100/2`
 /// curr is not taken into account the range is the same anywhere
 /// the iterator may be located
 impl PartialEq for Range {
