@@ -68,6 +68,7 @@ struct Expand {
     #[arg(short, long)]
     #[arg(default_value_t = ' ')]
     separator: char,
+
     nodesets: Vec<String>,
 }
 
@@ -100,6 +101,7 @@ fn count(count: &Count) {
 
 fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
     let separator = &expand.separator;
+
     for node_str in &expand.nodesets {
         let node = match Node::new(node_str) {
             Ok(n) => n,

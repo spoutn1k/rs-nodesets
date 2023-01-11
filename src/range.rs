@@ -208,7 +208,7 @@ impl Range {
             index = self.start;
             while index <= self.end {
                 vector.push(index);
-                index -= self.step;
+                index += self.step;
             }
         }
 

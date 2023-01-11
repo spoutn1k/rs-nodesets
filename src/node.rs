@@ -59,7 +59,9 @@ use std::process::exit;
  * * name is the name of the node where everything between brackets
  *        (and the brackets themselves) is replaced by '{}'.
  * * sets is a vector of rangesets: one rangeset per brackets found.
- * * values is used to compute the iterator (and get_next) method.
+ * * values is used to compute the iterator (and get_next) method
+ *          and is a tuple (index, pad) corresponding to the RangeSet
+ *          at the same index in the vector
  * * first is also used to compute the iterator and is true until
  *         the first time we pass into the iterator.
  */
@@ -108,6 +110,9 @@ impl Error for NodeErrorType {
 }
 
 /// Transforms a nodeset (String) into a vector of nodes (String)
+/// by expanding the created Node structure. This method can be
+/// very expensive on memory consumption depending on the number
+/// of nodes once that are expanded.
 /// ```rust
 /// use nodeset::node::{node_to_vec_string};
 ///
@@ -123,7 +128,7 @@ pub fn node_to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>>
     Ok(v)
 }
 
-/* This regylar expression is used to capture each rangeset in a string defining a Node */
+/* This regular expression is used to capture each rangeset in a string defining a Node */
 lazy_static! {
     static ref RE: Regex = Regex::new(r"\[([\d,\-/]+)\]|([\d]+)").unwrap();
 }
@@ -148,6 +153,30 @@ impl Node {
     /// Tells whether a Node is empty or not.
     pub fn is_empty(&self) -> bool {
         self.sets.is_empty() && self.name.is_empty()
+    }
+
+    /// Intersection of self Node with an other Node :
+    ///  `node[1,3-5,89]-cpu[2-4]` and `node[9-2,89,101,2-8/2]-cpu[1-3]`
+    ///  -> `node[3-5,89]-cpu[2-3]`
+    pub fn intersection(&self, other: &Self) -> Option<Node> {
+
+        let mut ns_sets: Vec<RangeSet> = Vec::new();
+        let mut values: Vec<(u32, usize)> = Vec::new();
+
+        if self.name != other.name {
+            None
+        } else {
+            for (i, rs_a) in self.sets.iter().enumerate() {
+                let rs_b: &RangeSet = &other.sets[i];
+                if let Some(inter) = rs_a.intersection(rs_b) {
+                    ns_sets.push(inter);
+                    values.push((0, 0));
+                } else {
+                    return None;
+                }
+            }
+            Some(Node { name: self.name.to_string(), sets: ns_sets, values, first: false })
+        }
     }
 
     /* Captures with regex all possible (and non overlapping) rangeset in the node name
@@ -402,4 +431,29 @@ fn testing_nodes_values() {
 
     let value = get_node_values_from_str("rack[1-2]-node[1-2]-cpu[1-2]");
     assert_eq!(value, vec!["rack1-node1-cpu1", "rack1-node1-cpu2", "rack1-node2-cpu1", "rack1-node2-cpu2", "rack2-node1-cpu1", "rack2-node1-cpu2", "rack2-node2-cpu1", "rack2-node2-cpu2"]);
+}
+
+#[test]
+fn testing_node_intersection() {
+    let ns_a:Node = "node[1,3-5,89]-cpu[2-4,85-90]".parse().unwrap();
+    let ns_b:Node = "node[9-2,89,101,2-8/2]-cpu[1-3,86-92/2]".parse().unwrap();
+    // -> node[3-5,89]-cpu[2-3,86-90/2]
+
+    let inter = ns_a.intersection(&ns_b);
+    let rs_a = RangeSet::new("3-5,89").unwrap();
+    let rs_b = RangeSet::new("2-3,86-90/2").unwrap();
+    println!("{:?}", inter);
+    assert_eq!(
+        inter,
+        Some(Node {name: "node{}-cpu{}".to_string(), sets: vec![rs_a, rs_b], values: vec![(0, 0), (0,0)], first: false}));
+
+    let ns_a:Node = "node[1,3-5,89]-cpu[2-4]".parse().unwrap();
+    let ns_b:Node = "node[9-2,89,101,2-8/2]-cpu[16-32]".parse().unwrap();
+    // -> no intersection !
+
+    let inter = ns_a.intersection(&ns_b);
+    println!("{:?}", inter);
+    assert_eq!(
+        inter,
+        None);
 }
