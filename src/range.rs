@@ -97,37 +97,94 @@ fn range_step_detection(vector: Vec<u32>) -> u32 {
 
 /// returns the intersection of two u32 vectors or None
 pub fn vec_u32_intersection(first: Vec<u32>, second: Vec<u32>) -> Option<Vec<u32>> {
-        let mut inter: Vec<u32> = Vec::new();
-        let mut first: Vec<u32> = first;
-        let mut second: Vec<u32> = second;
+    let mut inter: Vec<u32> = Vec::new();
+    let mut first: Vec<u32> = first;
+    let mut second: Vec<u32> = second;
 
-        first.sort_unstable();
-        second.sort_unstable();
+    first.sort_unstable();
+    second.sort_unstable();
 
-        //println!("first: {:?}", first);
-        //println!("second: {:?}", second);
+    //println!("first: {:?}", first);
+    //println!("second: {:?}", second);
 
-        let mut i1 = 0;
-        let mut i2 = 0;
-        while i1 < first.len() && i2 < second.len() {
-            //println!("i1:{} i2: {}", i1, i2);
-            if first[i1] == second[i2] {
+    let mut i1 = 0;
+    let mut i2 = 0;
+    while i1 < first.len() && i2 < second.len() {
+        //println!("i1:{} i2: {}", i1, i2);
+        match first[i1].cmp(&second[i2]) {
+            Ordering::Equal => {
                 inter.push(first[i1]);
                 i1 += 1;
                 i2 += 1;
-            } else if first[i1] > second[i2] {
-                i2 += 1;
-            } else {
-                i1 += 1
             }
+            Ordering::Greater => i2 += 1,
+            Ordering::Less => i1 += 1,
+        };
+    }
+
+    //println!("inter: {:?}", inter);
+    if !inter.is_empty() {
+        Some(inter)
+    } else {
+        None
+    }
+}
+
+// This function needs a non empty sorted Vector of u32.
+// It does fold every numbers in the vector into Ranges
+// that are put in a vector. This vector contains at
+// least one Range.
+// pad will be used for all Range in the new Vector
+pub fn fold_vec_u32_in_vec_range(v: Vec<u32>, pad: usize) -> Vec<Range> {
+    let mut index = 0;
+    let mut res: Vec<Range> = Vec::new();
+
+    if v.len() == 1 {
+        // only one value in the vector leads to only one Range with
+        // start, end and curr at the same value and step to 1 (by convention)
+        let range = Range::new_from_values(v[0], v[0], 1, pad, v[0]);
+        res.push(range);
+        res
+    } else {
+        // we know that we have at least two values
+        // so index + 1 exists
+        let mut step = v[index + 1] - v[index];
+        let mut diff;
+        let mut start = v[index];
+        while index + 1 < v.len() {
+            // println!("{index}");
+            // If we have a third value ahead then begin the loop
+            // until the end or until the difference between two
+            // values changed
+            while index + 2 < v.len() {
+                diff = v[index + 2] - v[index + 1];
+                if step != diff {
+                    // When the difference between the next two values is
+                    // not the same as the previous one, the range stops
+                    // here (and pushed in the result vector) and a new
+                    // one is started.
+                    let end = v[index + 1];
+                    let range = Range::new_from_values(start, end, step, pad, start);
+                    res.push(range);
+                    start = v[index + 2];
+                    if index + 3 < v.len() {
+                        step = v[index + 3] - v[index + 2];
+                    } else {
+                        step = 1;
+                    }
+                    break;
+                } else {
+                    index += 1;
+                }
+            }
+            index += 1;
         }
 
-        //println!("inter: {:?}", inter);
-        if !inter.is_empty() {
-            Some(inter)
-        } else {
-            None
-        }
+        let end = v[index];
+        let range = Range::new_from_values(start, end, step, pad, start);
+        res.push(range);
+        res
+    }
 }
 
 impl Range {
@@ -215,6 +272,20 @@ impl Range {
         vector
     }
 
+    /// Returns a new Range that is the union with the other one
+    /// Order (reverse or not) is not kept in the new Range
+    /// and is always forward
+    pub fn union(&self, other: &Self) -> Vec<Range> {
+        let mut first: Vec<u32> = self.generate_vec_u32();
+        let mut second: Vec<u32> = other.generate_vec_u32();
+
+        let pad = self.pad.max(other.pad);
+        first.append(&mut second);
+        first.sort_unstable();
+        first.dedup();
+        fold_vec_u32_in_vec_range(first, pad)
+    }
+
     /// Returns a new Range that is the intersection or None.
     /// Order (reverse or not) is not kept in the new Range
     /// and is always forward
@@ -242,7 +313,7 @@ impl Range {
                     curr: start,
                     step,
                 })
-            },
+            }
             None => None,
         }
     }
@@ -275,7 +346,7 @@ impl Range {
     /// Creates a new Range directly from the values
     /// that defines it: `start-end/step`
     /// pad is the minimal number of number needed: `2` with `Pad = 3` is `002`
-    pub fn new_from_values(start: u32, end: u32, step:u32, pad:usize, curr:u32) -> Range {
+    pub fn new_from_values(start: u32, end: u32, step: u32, pad: usize, curr: u32) -> Range {
         Range {
             start,
             end,
@@ -284,7 +355,6 @@ impl Range {
             curr,
         }
     }
-
 
     /// Creates a new Range with an &str like `1-5/2` or `1` or `9-15`
     /// it may even be in reverse mode such as `15-9`. Padding is
@@ -379,6 +449,7 @@ impl fmt::Display for Range {
 impl PartialEq for Range {
     fn eq(&self, other: &Self) -> bool {
         self.start == other.start && self.end == other.end && self.step == other.step
+        // && self.pad == other.pad
     }
 }
 
@@ -472,7 +543,7 @@ fn testing_range_values() {
 #[test]
 fn testing_range_intersection() {
     let range_a: Range = "1-14/4".parse().unwrap();
-    // 1 5 9 14
+    // 1 5 9 13
     let range_b: Range = "3-20/2".parse().unwrap();
     // 3 5 7 9 11 13 15 17 19
     let inter = range_a.intersection(&range_b);
@@ -544,5 +615,162 @@ fn testing_range_intersection() {
             pad: 2,
             curr: 20
         })
+    );
+}
+
+#[test]
+fn testing_range_union() {
+    let range_a: Range = "1-14/4".parse().unwrap();
+    // 1 5 9 13
+    let range_b: Range = "3-20/2".parse().unwrap();
+    // 3 5 7 9 11 13 15 17 19
+    let inter = range_a.union(&range_b);
+    // 1 3 5 9 11 13 15 17 19 -> 1-19/2
+    assert_eq!(
+        inter,
+        vec![Range {
+            start: 1,
+            end: 19,
+            step: 2,
+            pad: 0,
+            curr: 1
+        },]
+    );
+
+    let range_a: Range = "38-44".parse().unwrap();
+    // 38 39 40 41 42 43 44
+    let range_b: Range = "50-56".parse().unwrap();
+    // 40 30 38 37 36
+    let inter = range_a.union(&range_b);
+    //
+    assert_eq!(
+        inter,
+        vec![
+            Range {
+                start: 38,
+                end: 44,
+                step: 1,
+                pad: 0,
+                curr: 38
+            },
+            Range {
+                start: 50,
+                end: 56,
+                step: 1,
+                pad: 0,
+                curr: 50
+            },
+        ]
+    );
+
+    let range_a: Range = "1-20/2".parse().unwrap();
+    // 1 3 5 7 ...
+    let range_b: Range = "2-20/2".parse().unwrap();
+    // 2 4 6 8 9 ...
+    let inter = range_a.union(&range_b);
+    assert_eq!(
+        inter,
+        vec![Range {
+            start: 1,
+            end: 20,
+            step: 1,
+            pad: 0,
+            curr: 1
+        },]
+    );
+
+    let range_a: Range = "2-20/2".parse().unwrap();
+    // 2 4 6 ... 16 18 20
+    let range_b: Range = "20-40/2".parse().unwrap();
+    // 40 38 36 ... 24 22 20
+    let inter = range_a.union(&range_b);
+    // 20
+    assert_eq!(
+        inter,
+        vec![Range {
+            start: 2,
+            end: 40,
+            step: 2,
+            pad: 0,
+            curr: 1
+        },]
+    );
+
+    let range_a: Range = "02-40/2".parse().unwrap();
+    // 02 04 06 08 ... 36 38 40
+    let range_b: Range = "60-20/3".parse().unwrap();
+    // 60 57 54 51 ... 27 24 21
+    let inter = range_a.union(&range_b);
+    // 02 04 18 20 21 22 24 26 27 28 30 32 33 34 36 38 39 40 42 45 48…
+    // at least two possibilities
+    // * 02-20/2, 21, 22-26/2, 27, 28-32/2, 33, 34-38/2, 39, 40-42/2, 45-60/3
+    // * 02-20/2, 21-22, 24-26/2, 27-28, 30-32/2, 33-34, 36-38/2, 39-40, 42-60/3
+    assert_eq!(
+        inter,
+        vec![
+            Range {
+                start: 2,
+                end: 20,
+                step: 2,
+                pad: 2,
+                curr: 1
+            },
+            Range {
+                start: 21,
+                end: 22,
+                step: 1,
+                pad: 2,
+                curr: 21
+            },
+            Range {
+                start: 24,
+                end: 26,
+                step: 2,
+                pad: 2,
+                curr: 24
+            },
+            Range {
+                start: 27,
+                end: 28,
+                step: 1,
+                pad: 2,
+                curr: 27
+            },
+            Range {
+                start: 30,
+                end: 32,
+                step: 2,
+                pad: 2,
+                curr: 30
+            },
+            Range {
+                start: 33,
+                end: 34,
+                step: 1,
+                pad: 2,
+                curr: 33
+            },
+            Range {
+                start: 36,
+                end: 38,
+                step: 2,
+                pad: 2,
+                curr: 36
+            },
+            Range {
+                start: 39,
+                end: 40,
+                step: 1,
+                pad: 2,
+                curr: 39
+            },
+            Range {
+                start: 42,
+                end: 60,
+                step: 3,
+                pad: 2,
+                curr: 42
+            }
+        ]
     );
 }

@@ -20,7 +20,7 @@
  *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-use crate::range::{Range, vec_u32_intersection};
+use crate::range::{fold_vec_u32_in_vec_range, vec_u32_intersection, Range};
 use std::error::Error;
 use std::fmt;
 use std::fmt::Write;
@@ -50,64 +50,6 @@ use std::process::exit; //used for testing
 pub struct RangeSet {
     set: Vec<Range>,
     curr: usize,
-}
-
-// This function needs a non empty sorted Vector of u32.
-// It does fold every numbers in the vector into Ranges
-// that are put in a vector. This vector contains at
-// least one Range.
-// pad will be used for all Range in the new Vector
-fn fold_vec_u32_in_vec_range(v: Vec<u32>, pad: usize) -> Vec<Range> {
-
-    let mut index = 0;
-    let mut res: Vec<Range> = Vec::new();
-
-    if v.len() == 1 {
-        // only one value in the vector leads to only one Range with
-        // start, end and curr at the same value and step to 1 (by convention)
-        let range = Range::new_from_values(v[0] , v[0], 1,  pad, v[0]);
-        res.push(range);
-        res
-    } else {
-        // we know that we have at least two values
-        // so index + 1 exists
-        let mut step = v[index + 1] - v[index];
-        let mut diff;
-        let mut start = v[index];
-        while index + 1 < v.len() {
-            // println!("{index}");
-            // If we have a third value ahead then begin the loop
-            // until the end or until the difference between two
-            // values changed
-            while index + 2 < v.len() {
-                diff = v[index + 2] - v[index + 1];
-                if step != diff {
-                    // When the difference between the next two values is
-                    // not the same as the previous one, the range stops
-                    // here (and pushed in the result vector) and a new
-                    // one is started.
-                    let end = v[index + 1];
-                    let range = Range::new_from_values(start, end, step, pad, start);
-                    res.push(range);
-                    start = v[index + 2];
-                    if index + 3 < v.len() {
-                        step = v[index + 3] - v[index + 2];
-                    } else {
-                        step = 1;
-                    }
-                    break;
-                } else {
-                    index += 1;
-                }
-            }
-            index += 1;
-        }
-
-        let end = v[index];
-        let range = Range::new_from_values(start, end, step, pad, start);
-        res.push(range);
-        res
-    }
 }
 
 impl RangeSet {
@@ -151,12 +93,17 @@ impl RangeSet {
     /// Intersection of self RangeSet with other RangeSet :
     ///  `1,3-5,89` and `9-2,101,2-8/2`
     pub fn intersection(&self, other: &Self) -> Option<RangeSet> {
-
         // special cases where self or other is empty
         if self.is_empty() {
-            return Some(RangeSet{set: other.set.clone(), curr: other.curr});
+            return Some(RangeSet {
+                set: other.set.clone(),
+                curr: other.curr,
+            });
         } else if other.is_empty() {
-            return Some(RangeSet{set: self.set.clone(), curr: self.curr});
+            return Some(RangeSet {
+                set: self.set.clone(),
+                curr: self.curr,
+            });
         }
         // here self and other are not empty so we get at least
         // 2 vectors.
@@ -168,19 +115,22 @@ impl RangeSet {
         for r in &self.set {
             pad = pad.max(r.get_pad());
             let mut v = r.generate_vec_u32();
-            first.append(& mut v);
+            first.append(&mut v);
         }
         for r in &other.set {
             pad = pad.max(r.get_pad());
             let mut v = r.generate_vec_u32();
-            second.append(& mut v);
+            second.append(&mut v);
         }
 
         if let Some(inter) = vec_u32_intersection(first, second) {
             //println!("{:?}", inter);
             let range_vec = fold_vec_u32_in_vec_range(inter, pad);
             //println!("{:?}", range_vec);
-            Some(RangeSet {set: range_vec, curr: 0})
+            Some(RangeSet {
+                set: range_vec,
+                curr: 0,
+            })
         } else {
             None
         }
@@ -373,9 +323,9 @@ fn testing_rangeset_values() {
 
 #[test]
 fn testing_rangeset_intersection() {
-    let rs_a:RangeSet = "1,3-5,89".parse().unwrap();
+    let rs_a: RangeSet = "1,3-5,89".parse().unwrap();
     // "1", "3", "4", "5", "89"
-    let rs_b:RangeSet = "9-2,101,2-8/2,89".parse().unwrap();
+    let rs_b: RangeSet = "9-2,101,2-8/2,89".parse().unwrap();
     // "9", "8", "7", "6", "5", "4", "3", "2", "101", "2", "4", "6", "8", "89"
 
     let inter = rs_a.intersection(&rs_b);
@@ -384,12 +334,15 @@ fn testing_rangeset_intersection() {
     println!("{:?}", inter);
     assert_eq!(
         inter,
-        Some(RangeSet { set : vec![range_a, range_b], curr: 0 }));
+        Some(RangeSet {
+            set: vec![range_a, range_b],
+            curr: 0
+        })
+    );
 
-
-    let rs_a:RangeSet = "10-01/2,32-72/4".parse().unwrap();
+    let rs_a: RangeSet = "10-01/2,32-72/4".parse().unwrap();
     // "10", "08", "06", "04", "02", "32", "36", "40", "44", "48", "52", "56", "60", "64", "68", "72"
-    let rs_b:RangeSet = "01-10,7-12/2,50-60/2".parse().unwrap();
+    let rs_b: RangeSet = "01-10,7-12/2,50-60/2".parse().unwrap();
     // "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "7", "9", "11"
 
     let inter = rs_a.intersection(&rs_b);
@@ -398,5 +351,9 @@ fn testing_rangeset_intersection() {
     println!("{:?}", inter);
     assert_eq!(
         inter,
-        Some(RangeSet { set : vec![range_a, range_b], curr: 0 }));
+        Some(RangeSet {
+            set: vec![range_a, range_b],
+            curr: 0
+        })
+    );
 }

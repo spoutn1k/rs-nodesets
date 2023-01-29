@@ -78,17 +78,19 @@ pub enum NodeErrorType {
     Regular(ErrorKind),
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ErrorKind {
     RegexNoMatch,
-    RangeSetCreation,
+    RegexErrorMatch(String),
+    RangeSetCreation(String),
 }
 
 impl ErrorKind {
     fn as_str(&self) -> &str {
         match *self {
             ErrorKind::RegexNoMatch => "no match found in string",
-            ErrorKind::RangeSetCreation => "unable to create rangeset",
+            ErrorKind::RegexErrorMatch(_) => "matching seems wrong. Verify that ranges are correctly formatted",
+            ErrorKind::RangeSetCreation(_) => "unable to create rangeset",
         }
     }
 }
@@ -96,7 +98,11 @@ impl ErrorKind {
 impl fmt::Display for NodeErrorType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            NodeErrorType::Regular(ref err) => write!(f, "Error: {:?}", err),
+            NodeErrorType::Regular(ref err) => match err {
+                ErrorKind::RegexNoMatch => write!(f, "{}", err.as_str()),
+                ErrorKind::RegexErrorMatch(s) => write!(f, "{} '{}'", err.as_str(), s),
+                ErrorKind::RangeSetCreation(s) => write!(f, "{} '{}'", err.as_str(), s),
+            },
         }
     }
 }
@@ -159,7 +165,6 @@ impl Node {
     ///  `node[1,3-5,89]-cpu[2-4]` and `node[9-2,89,101,2-8/2]-cpu[1-3]`
     ///  -> `node[3-5,89]-cpu[2-3]`
     pub fn intersection(&self, other: &Self) -> Option<Node> {
-
         let mut ns_sets: Vec<RangeSet> = Vec::new();
         let mut values: Vec<(u32, usize)> = Vec::new();
 
@@ -175,7 +180,12 @@ impl Node {
                     return None;
                 }
             }
-            Some(Node { name: self.name.to_string(), sets: ns_sets, values, first: false })
+            Some(Node {
+                name: self.name.to_string(),
+                sets: ns_sets,
+                values,
+                first: false,
+            })
         }
     }
 
@@ -187,7 +197,7 @@ impl Node {
         let mut rangesets: Vec<String> = Vec::new();
         let mut name = nodename.to_string();
         for capture in RE.captures_iter(nodename) {
-            // println!("capture: {:?}", capture);
+            println!("capture: {:?}", capture);
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {
@@ -200,7 +210,11 @@ impl Node {
         if !rangesets.is_empty() {
             name = RE.replace_all(nodename, "{}").to_string();
         }
-        // println!("name: {}", name);
+        // name that still contains these characters indicates that the nodename is malformed.
+        if name.contains('[') || name.contains(']') || name.contains('/') {
+            return Err(NodeErrorType::Regular(ErrorKind::RegexErrorMatch(name)));
+        }
+        println!("name: {}", name);
 
         Ok((name, rangesets))
     }
@@ -213,7 +227,7 @@ impl Node {
         for set in rangesets {
             let rangeset = match RangeSet::new(&set) {
                 Ok(r) => r,
-                Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RangeSetCreation)),
+                Err(_) => return Err(NodeErrorType::Regular(ErrorKind::RangeSetCreation(set))),
             };
             sets.push(rangeset);
             values.push((0, 0));
@@ -435,8 +449,8 @@ fn testing_nodes_values() {
 
 #[test]
 fn testing_node_intersection() {
-    let ns_a:Node = "node[1,3-5,89]-cpu[2-4,85-90]".parse().unwrap();
-    let ns_b:Node = "node[9-2,89,101,2-8/2]-cpu[1-3,86-92/2]".parse().unwrap();
+    let ns_a: Node = "node[1,3-5,89]-cpu[2-4,85-90]".parse().unwrap();
+    let ns_b: Node = "node[9-2,89,101,2-8/2]-cpu[1-3,86-92/2]".parse().unwrap();
     // -> node[3-5,89]-cpu[2-3,86-90/2]
 
     let inter = ns_a.intersection(&ns_b);
@@ -445,15 +459,19 @@ fn testing_node_intersection() {
     println!("{:?}", inter);
     assert_eq!(
         inter,
-        Some(Node {name: "node{}-cpu{}".to_string(), sets: vec![rs_a, rs_b], values: vec![(0, 0), (0,0)], first: false}));
+        Some(Node {
+            name: "node{}-cpu{}".to_string(),
+            sets: vec![rs_a, rs_b],
+            values: vec![(0, 0), (0, 0)],
+            first: false
+        })
+    );
 
-    let ns_a:Node = "node[1,3-5,89]-cpu[2-4]".parse().unwrap();
-    let ns_b:Node = "node[9-2,89,101,2-8/2]-cpu[16-32]".parse().unwrap();
+    let ns_a: Node = "node[1,3-5,89]-cpu[2-4]".parse().unwrap();
+    let ns_b: Node = "node[9-2,89,101,2-8/2]-cpu[16-32]".parse().unwrap();
     // -> no intersection !
 
     let inter = ns_a.intersection(&ns_b);
     println!("{:?}", inter);
-    assert_eq!(
-        inter,
-        None);
+    assert_eq!(inter, None);
 }

@@ -115,7 +115,7 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
                 print!("{}{}", n, separator);
             }
         }
-        println!("");
+        println!();
     }
     println!();
     Ok(())
