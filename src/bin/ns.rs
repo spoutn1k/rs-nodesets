@@ -84,7 +84,7 @@ fn count(count: &Count) {
         let node = match Node::new(node_str) {
             Ok(n) => n,
             Err(e) => {
-                println!("Error: {}", e);
+                println!("Error: {e}");
                 exit(1);
             }
         };
@@ -95,7 +95,7 @@ fn count(count: &Count) {
         }
     }
     if count.total {
-        println!("{}", total);
+        println!("{total}");
     }
 }
 
@@ -110,9 +110,9 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
         let len: usize = node.len().try_into().unwrap();
         for (i, n) in node.enumerate() {
             if i == len - 1 {
-                print!("{}", n);
+                print!("{n}");
             } else {
-                print!("{}{}", n, separator);
+                print!("{n}{separator}");
             }
         }
         println!();
@@ -126,12 +126,12 @@ fn fold(fold: &Fold) {
         let node = match Node::new(node_str) {
             Ok(n) => n,
             Err(e) => {
-                println!("Error: {}", e);
+                println!("Error: {e}");
                 exit(1);
             }
         };
-        println!("{}", node);
-        println!("{:?}", node);
+        println!("{node}");
+        println!("{node:?}");
     }
 }
 
@@ -144,7 +144,7 @@ fn main() {
         }
         Commands::Expand(e) => {
             if let Err(e) = expand(e) {
-                println!("Error: {}", e);
+                println!("Error: {e}");
                 exit(1);
             }
         }

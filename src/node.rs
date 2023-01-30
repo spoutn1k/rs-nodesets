@@ -197,7 +197,7 @@ impl Node {
         let mut rangesets: Vec<String> = Vec::new();
         let mut name = nodename.to_string();
         for capture in RE.captures_iter(nodename) {
-            println!("capture: {:?}", capture);
+            println!("capture: {capture:?}");
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {
@@ -214,7 +214,7 @@ impl Node {
         if name.contains('[') || name.contains(']') || name.contains('/') {
             return Err(NodeErrorType::Regular(ErrorKind::RegexErrorMatch(name)));
         }
-        println!("name: {}", name);
+        println!("name: {name}");
 
         Ok((name, rangesets))
     }
@@ -247,7 +247,7 @@ impl Node {
 
         for i in 0..self.sets.len() {
             let (current, pad) = self.values[i];
-            replaced = nodestr.replacen("{}", format!("{:0pad$}", current).as_str(), 1);
+            replaced = nodestr.replacen("{}", format!("{current:0pad$}").as_str(), 1);
             nodestr = replaced.as_str();
         }
 
@@ -298,10 +298,9 @@ impl Iterator for Node {
                 return Some(self.make_node_string());
             }
 
-            match self.get_next() {
-                Some(_) => Some(self.make_node_string()),
-                None => None,
-            }
+            // Get the next one and if anxy make the node string
+            // out of it and return this.
+            self.get_next().map(|_| self.make_node_string())
         }
     }
 }
@@ -344,13 +343,13 @@ impl fmt::Display for Node {
         let mut replaced;
         for set in &self.sets {
             if set.is_alone() {
-                replaced = nodestr.replacen("{}", format!("{}", set).as_str(), 1)
+                replaced = nodestr.replacen("{}", format!("{set}").as_str(), 1)
             } else {
-                replaced = nodestr.replacen("{}", format!("[{}]", set).as_str(), 1)
+                replaced = nodestr.replacen("{}", format!("[{set}]").as_str(), 1)
             };
             nodestr = replaced.as_str();
         }
-        write!(f, "{}", nodestr)
+        write!(f, "{nodestr}")
     }
 }
 
@@ -361,7 +360,7 @@ fn get_node_values_from_str(node_str: &str) -> Vec<String> {
     let node = match Node::new(node_str) {
         Ok(r) => r,
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
             exit(1);
         }
     };
@@ -456,7 +455,7 @@ fn testing_node_intersection() {
     let inter = ns_a.intersection(&ns_b);
     let rs_a = RangeSet::new("3-5,89").unwrap();
     let rs_b = RangeSet::new("2-3,86-90/2").unwrap();
-    println!("{:?}", inter);
+    println!("{inter:?}");
     assert_eq!(
         inter,
         Some(Node {
@@ -472,6 +471,6 @@ fn testing_node_intersection() {
     // -> no intersection !
 
     let inter = ns_a.intersection(&ns_b);
-    println!("{:?}", inter);
+    println!("{inter:?}");
     assert_eq!(inter, None);
 }

@@ -407,7 +407,7 @@ impl Iterator for Range {
             None => return None,
         };
         let pad = self.pad;
-        return Some(format!("{:0pad$}", curr));
+        return Some(format!("{curr:0pad$}"));
     }
 }
 
@@ -437,7 +437,7 @@ impl fmt::Display for Range {
             start_end_str
         };
 
-        write!(f, "{}", to_display)
+        write!(f, "{to_display}")
     }
 }
 
@@ -460,7 +460,7 @@ fn get_range_values_from_str(range_str: &str) -> Vec<String> {
     let range = match Range::new(range_str) {
         Ok(r) => r,
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
             exit(1);
         }
     };

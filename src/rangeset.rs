@@ -225,7 +225,7 @@ impl Iterator for RangeSet {
             None => return None,
         };
 
-        let next = format!("{:0pad$}", next_u32);
+        let next = format!("{next_u32:0pad$}");
         Some(next)
     }
 }
@@ -265,13 +265,13 @@ impl fmt::Display for RangeSet {
 
         for (i, range) in self.set.iter().enumerate() {
             if i == len - 1 {
-                write!(&mut to_display, "{}", range).unwrap();
+                write!(&mut to_display, "{range}").unwrap();
             } else {
-                write!(&mut to_display, "{},", range).unwrap();
+                write!(&mut to_display, "{range},").unwrap();
             }
         }
 
-        write!(f, "{}", to_display)
+        write!(f, "{to_display}")
     }
 }
 
@@ -282,7 +282,7 @@ fn get_rangeset_values_from_str(rangeset_str: &str) -> Vec<String> {
     let rangeset = match RangeSet::new(rangeset_str) {
         Ok(r) => r,
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Error: {e}");
             exit(1);
         }
     };
@@ -355,7 +355,7 @@ fn testing_rangeset_intersection() {
     let inter = rs_a.intersection(&rs_b);
     let range_a = Range::new("3-5").unwrap();
     let range_b = Range::new("89").unwrap();
-    println!("{:?}", inter);
+    println!("{inter:?}");
     assert_eq!(
         inter,
         Some(RangeSet {
@@ -372,7 +372,7 @@ fn testing_rangeset_intersection() {
     let inter = rs_a.intersection(&rs_b);
     let range_a = Range::new("02-10/2").unwrap();
     let range_b = Range::new("52-60/4").unwrap();
-    println!("{:?}", inter);
+    println!("{inter:?}");
     assert_eq!(
         inter,
         Some(RangeSet {
@@ -392,7 +392,7 @@ fn testing_rangeset_union() {
     let inter = rs_a.union(&rs_b);
     let range_a = Range::new("1-9").unwrap();
     let range_b = Range::new("89-101/12").unwrap();
-    println!("{:?}", inter);
+    println!("{inter:?}");
     assert_eq!(
         inter,
         RangeSet {
@@ -411,7 +411,7 @@ fn testing_rangeset_union() {
     let range_b = Range::new("32-48/4").unwrap();
     let range_c = Range::new("50-60/2").unwrap();
     let range_d = Range::new("64-72/4").unwrap();
-    println!("{:?}", inter);
+    println!("{inter:?}");
     assert_eq!(
         inter,
         RangeSet {
