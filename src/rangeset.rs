@@ -90,7 +90,31 @@ impl RangeSet {
         self.set.is_empty()
     }
 
-    /// Intersection of self RangeSet with other RangeSet :
+    /// Union of self RangeSet with other RangeSet:
+    ///  `1,3-5,89` and `9-2,101,2-8/2` -> 1-9,89,101
+    pub fn union(&self, other: &Self) -> RangeSet {
+        let mut united: Vec<u32> = Vec::new();
+        let mut pad: usize = 0;
+
+        for r in &self.set {
+            pad = pad.max(r.get_pad());
+            united.append(&mut r.generate_vec_u32());
+        }
+        for r in &other.set {
+            pad = pad.max(r.get_pad());
+            united.append(&mut r.generate_vec_u32());
+        }
+
+        united.sort_unstable();
+        united.dedup();
+
+        RangeSet {
+            set: fold_vec_u32_in_vec_range(united, pad),
+            curr: 1,
+        }
+    }
+
+    /// Intersection of self RangeSet with other RangeSet:
     ///  `1,3-5,89` and `9-2,101,2-8/2`
     pub fn intersection(&self, other: &Self) -> Option<RangeSet> {
         // special cases where self or other is empty
@@ -355,5 +379,44 @@ fn testing_rangeset_intersection() {
             set: vec![range_a, range_b],
             curr: 0
         })
+    );
+}
+
+#[test]
+fn testing_rangeset_union() {
+    let rs_a: RangeSet = "1,3-5,89".parse().unwrap();
+    // "1", "3", "4", "5", "89"
+    let rs_b: RangeSet = "9-2,101,2-8/2,89".parse().unwrap();
+    // "9", "8", "7", "6", "5", "4", "3", "2", "101", "2", "4", "6", "8", "89"
+
+    let inter = rs_a.union(&rs_b);
+    let range_a = Range::new("1-9").unwrap();
+    let range_b = Range::new("89-101/12").unwrap();
+    println!("{:?}", inter);
+    assert_eq!(
+        inter,
+        RangeSet {
+            set: vec![range_a, range_b],
+            curr: 0
+        }
+    );
+
+    let rs_a: RangeSet = "10-01/2,32-72/4".parse().unwrap();
+    // "10", "08", "06", "04", "02", "32", "36", "40", "44", "48", "52", "56", "60", "64", "68", "72"
+    let rs_b: RangeSet = "01-10,7-12/2,50-60/2".parse().unwrap();
+    // "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "7", "9", "11"
+
+    let inter = rs_a.union(&rs_b);
+    let range_a = Range::new("01-11").unwrap();
+    let range_b = Range::new("32-48/4").unwrap();
+    let range_c = Range::new("50-60/2").unwrap();
+    let range_d = Range::new("64-72/4").unwrap();
+    println!("{:?}", inter);
+    assert_eq!(
+        inter,
+        RangeSet {
+            set: vec![range_a, range_b, range_c, range_d],
+            curr: 0
+        }
     );
 }
