@@ -22,6 +22,7 @@
 
 use crate::rangeset::RangeSet;
 use lazy_static::lazy_static;
+use std::fmt::Write;
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
@@ -161,6 +162,24 @@ impl Node {
         self.sets.is_empty() && self.name.is_empty()
     }
 
+    /// Transforms a nodeset (String) into a string
+    /// by expanding the created Node structure.
+    pub fn expand(&self, separator: &str) -> Result<String, Box<dyn Error>> {
+        // This is a way to do a clone or a copy as we can not iterate
+        // over self for now.
+        let node: Node = Node::new(&self.to_string())?;
+        let len: usize = node.len().try_into().unwrap();
+        let mut to_return = String::new();
+        for (i, n) in node.enumerate() {
+            if i == len - 1 {
+                write!(&mut to_return, "{n}").unwrap();
+            } else {
+                write!(&mut to_return, "{n}{separator}").unwrap();
+            }
+        }
+        Ok(to_return)
+    }
+
     /// Intersection of self Node with an other Node :
     ///  `node[1,3-5,89]-cpu[2-4]` and `node[9-2,89,101,2-8/2]-cpu[1-3]`
     ///  -> `node[3-5,89]-cpu[2-3]`
@@ -197,7 +216,7 @@ impl Node {
         let mut rangesets: Vec<String> = Vec::new();
         let mut name = nodename.to_string();
         for capture in RE.captures_iter(nodename) {
-            println!("capture: {capture:?}");
+            //println!("capture: {capture:?}");
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {
@@ -214,7 +233,7 @@ impl Node {
         if name.contains('[') || name.contains(']') || name.contains('/') {
             return Err(NodeErrorType::Regular(ErrorKind::RegexErrorMatch(name)));
         }
-        println!("name: {name}");
+        //println!("name: {name}");
 
         Ok((name, rangesets))
     }
