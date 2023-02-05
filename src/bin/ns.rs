@@ -107,15 +107,10 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
             Ok(n) => n,
             Err(e) => return Err(Box::new(e)),
         };
-        let len: usize = node.len().try_into().unwrap();
-        for (i, n) in node.enumerate() {
-            if i == len - 1 {
-                print!("{n}");
-            } else {
-                print!("{n}{separator}");
-            }
-        }
-        println!();
+        match node.expand(format!("{separator}").as_str()) {
+            Ok(s) => println!("{s}"),
+            Err(e) => println!("Error while expanding nodeset {node}: {e}"),
+        };
     }
     println!();
     Ok(())
