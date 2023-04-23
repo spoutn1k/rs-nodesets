@@ -22,10 +22,14 @@
 #![doc = include_str!("../README.md")]
 
 /// module to manage node(s). Expanding for instance `node[1-4]` to `node1 node2 node3 node4`
-pub mod node;
+mod node;
 
 /// module to manage range such as `1-4` or `1` or even `30-0/4`
-pub mod range;
+mod range;
 
 /// module to manage a set of range called rangeset such as `1-4,8-14/2,50`
-pub mod rangeset;
+mod rangeset;
+
+pub use node::{Node, node_to_vec_string};
+pub use range::{Range, guess_padding, vec_u32_intersection, fold_vec_u32_in_vec_range};
+pub use rangeset::RangeSet;

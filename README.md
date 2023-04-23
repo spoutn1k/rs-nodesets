@@ -7,7 +7,7 @@ As of now one can iterate over nodes, count (`len()` method) them, display
 in a folded way :
 
 ```rust
-    use nodeset::node::Node;
+    use nodeset::Node;
     use std::process::exit;
 
     let node = match Node::new("r[1-10/2,15]esw[2-8]") {
@@ -40,7 +40,7 @@ r1esw2 r1esw3 r1esw4 r1esw5 r1esw6 r1esw7 r1esw8 r3esw2 r3esw3 r3esw4 r3esw5 r3e
 Alternatively you can use `node_to_vec_string()` function to directly expand node notation into a Vector of Strings :
 
 ```rust
-use nodeset::node::{node_to_vec_string};
+use nodeset::node_to_vec_string;
 
 let v = node_to_vec_string("r[1-6/2]esw[1,3,5]-port[23-24]").unwrap();
 assert_eq!(v, ["r1esw1-port23", "r1esw1-port24", "r1esw3-port23", "r1esw3-port24", "r1esw5-port23", "r1esw5-port24", "r3esw1-port23", "r3esw1-port24", "r3esw3-port23", "r3esw3-port24", "r3esw5-port23", "r3esw5-port24", "r5esw1-port23", "r5esw1-port24", "r5esw3-port23", "r5esw3-port24", "r5esw5-port23", "r5esw5-port24"]);

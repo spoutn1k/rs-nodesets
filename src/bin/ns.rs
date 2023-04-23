@@ -31,7 +31,7 @@ use clap::{Args, Parser, Subcommand};
 /// * 0-30/4
 /// Between '[]' a Set
 /// A global name 'rack{}node{}.panel{}' and a vector of sets.
-use nodeset::node::Node;
+use nodeset::Node;
 use std::error::Error;
 use std::process::exit;
 

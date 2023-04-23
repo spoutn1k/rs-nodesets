@@ -40,7 +40,7 @@ use std::process::exit;
 ///
 /// ```rust
 ///
-/// use nodeset::node::Node;
+/// use nodeset::Node;
 /// use std::process::exit;
 /// let node = match Node::new("r1esw[2-6]") {
 ///     Ok(n) => n,
@@ -121,7 +121,7 @@ impl Error for NodeErrorType {
 /// very expensive on memory consumption depending on the number
 /// of nodes once that are expanded.
 /// ```rust
-/// use nodeset::node::{node_to_vec_string};
+/// use nodeset::node_to_vec_string;
 ///
 /// let v = node_to_vec_string("r1esw[2-6]").unwrap();
 /// assert_eq!(v, ["r1esw2", "r1esw3", "r1esw4", "r1esw5", "r1esw6"]);

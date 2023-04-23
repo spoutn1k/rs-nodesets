@@ -42,7 +42,7 @@ use std::process::exit; //used for testing
 ///
 /// Example:
 /// ```rust
-/// use nodeset::range::Range;
+/// use nodeset::Range;
 /// let range = Range::new("01-15/3");
 /// ```
 
@@ -407,7 +407,7 @@ impl Iterator for Range {
             None => return None,
         };
         let pad = self.pad;
-        return Some(format!("{curr:0pad$}"));
+        Some(format!("{curr:0pad$}"))
     }
 }
 

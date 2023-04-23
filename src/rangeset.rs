@@ -43,7 +43,7 @@ use std::process::exit; //used for testing
 ///
 /// Example:
 /// ```rust
-/// use nodeset::rangeset::RangeSet;
+/// use nodeset::RangeSet;
 /// let rangeset = RangeSet::new("22-28/2,29");
 /// ```
 #[derive(Debug)] /* Auto generates Debug trait */
