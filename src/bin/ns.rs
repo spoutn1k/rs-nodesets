@@ -31,7 +31,7 @@ use clap::{Args, Parser, Subcommand};
 /// * 0-30/4
 /// Between '[]' a Set
 /// A global name 'rack{}node{}.panel{}' and a vector of sets.
-use nodeset::Node;
+use nodeset::NodeSet;
 use std::error::Error;
 use std::process::exit;
 
@@ -81,7 +81,7 @@ struct Fold {
 fn count(count: &Count) {
     let mut total = 0;
     for node_str in &count.nodesets {
-        let node = match Node::new(node_str) {
+        let node = match NodeSet::new(node_str) {
             Ok(n) => n,
             Err(e) => {
                 println!("Error: {e}");
@@ -103,7 +103,7 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
     let separator = &expand.separator;
 
     for node_str in &expand.nodesets {
-        let node = match Node::new(node_str) {
+        let node = match NodeSet::new(node_str) {
             Ok(n) => n,
             Err(e) => return Err(Box::new(e)),
         };
@@ -112,13 +112,12 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
             Err(e) => println!("Error while expanding nodeset {node}: {e}"),
         };
     }
-    println!();
     Ok(())
 }
 
 fn fold(fold: &Fold) {
     for node_str in &fold.nodesets {
-        let node = match Node::new(node_str) {
+        let node = match NodeSet::new(node_str) {
             Ok(n) => n,
             Err(e) => {
                 println!("Error: {e}");

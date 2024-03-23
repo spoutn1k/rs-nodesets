@@ -46,7 +46,7 @@ use std::process::exit; //used for testing
 /// use nodeset::RangeSet;
 /// let rangeset = RangeSet::new("22-28/2,29");
 /// ```
-#[derive(Debug)] /* Auto generates Debug trait */
+#[derive(Debug, Clone)] /* Auto generates Debug trait */
 pub struct RangeSet {
     set: Vec<Range>,
     curr: usize,

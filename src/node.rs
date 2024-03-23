@@ -22,10 +22,10 @@
 
 use crate::rangeset::RangeSet;
 use lazy_static::lazy_static;
-use std::fmt::Write;
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
+use std::fmt::Write;
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -66,7 +66,7 @@ use std::process::exit;
  * * first is also used to compute the iterator and is true until
  *         the first time we pass into the iterator.
  */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node {
     name: String,
     sets: Vec<RangeSet>,
@@ -137,7 +137,7 @@ pub fn node_to_vec_string(node_str: &str) -> Result<Vec<String>, Box<dyn Error>>
 
 /* This regular expression is used to capture each rangeset in a string defining a Node */
 lazy_static! {
-    static ref RE: Regex = Regex::new(r"\[([\d,\-/]+)\]|([\d]+)").unwrap();
+    pub static ref RE: Regex = Regex::new(r"\[([\d,\-/]+)\]|([\d]+)").unwrap();
 }
 
 impl Node {
@@ -212,11 +212,10 @@ impl Node {
      * for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
      * It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2
      */
-    fn capture_with_regex(nodename: &str) -> Result<(String, Vec<String>), NodeErrorType> {
+    pub fn capture_with_regex(nodename: &str) -> Result<(String, Vec<String>), NodeErrorType> {
         let mut rangesets: Vec<String> = Vec::new();
         let mut name = nodename.to_string();
         for capture in RE.captures_iter(nodename) {
-            //println!("capture: {capture:?}");
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {

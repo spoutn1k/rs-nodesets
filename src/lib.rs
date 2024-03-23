@@ -24,12 +24,16 @@
 /// module to manage node(s). Expanding for instance `node[1-4]` to `node1 node2 node3 node4`
 mod node;
 
+/// module to manage comma-separated node definitions, `node[1-4],gpunode[1-4]`
+mod nodeset;
+
 /// module to manage range such as `1-4` or `1` or even `30-0/4`
 mod range;
 
 /// module to manage a set of range called rangeset such as `1-4,8-14/2,50`
 mod rangeset;
 
-pub use node::{Node, node_to_vec_string};
-pub use range::{Range, guess_padding, vec_u32_intersection, fold_vec_u32_in_vec_range};
+pub use node::{node_to_vec_string, Node};
+pub use nodeset::NodeSet;
+pub use range::{fold_vec_u32_in_vec_range, guess_padding, vec_u32_intersection, Range};
 pub use rangeset::RangeSet;
