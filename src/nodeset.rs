@@ -74,7 +74,10 @@ impl NodeSet {
     }
 
     pub fn new<S: AsRef<str>>(string: S) -> Result<Self, NodeErrorType> {
+        // Create a copy of the original string to butcher
         let mut stencil = string.as_ref().to_string();
+
+        // Let the nodes figure out the rangesets, then overwrite them in the copy
         let (_, rangesets) = Node::capture_with_regex(string.as_ref())?;
         for rs in rangesets {
             unsafe {
@@ -82,14 +85,17 @@ impl NodeSet {
             }
         }
 
+        // We can now split using the commas left in the stencil, as they are vetted and not part
+        // of a rangeset definition
         let mut set = vec![];
         let mut cursor = 0;
         while cursor < stencil.len() {
             let range;
+
             match stencil[cursor..].find(',') {
-                Some(comma) => {
-                    range = cursor..comma;
-                    cursor = comma + 1
+                Some(comma_offset) => {
+                    range = cursor..(cursor + comma_offset);
+                    cursor += comma_offset + 1
                 }
                 None => {
                     range = cursor..stencil.len();
@@ -107,7 +113,7 @@ impl NodeSet {
     }
 }
 
-/// Iterator implementation for Node to allow one to use `for n in node {...}` construction.
+/// Iterator implementation for NodeSet to allow one to use `for n in node {...}` construction.
 impl Iterator for NodeSet {
     type Item = String;
 
