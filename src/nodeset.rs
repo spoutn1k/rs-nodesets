@@ -73,6 +73,33 @@ impl NodeSet {
         }
     }
 
+    pub fn optimize(&self) -> Self {
+        let mut optimized_set: Vec<Node> = vec![];
+
+        for node in &self.set {
+            #[rustfmt::skip]
+            let matches: Vec<(usize, Result<_, _>)> = optimized_set.iter()
+                .enumerate()
+                .map(|(idx, n)| (idx, n.union(&node)))
+                .filter(|(_, res)| res.is_ok())
+                .collect();
+
+            match matches.len() {
+                0 => optimized_set.push(node.clone()),
+                1 => {
+                    let (index, union) = matches.first().unwrap();
+                    optimized_set[index.clone()] = union.as_ref().unwrap().clone();
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        Self {
+            set: optimized_set,
+            current_iter_index: None,
+        }
+    }
+
     pub fn new<S: AsRef<str>>(string: S) -> Result<Self, NodeErrorType> {
         // Create a copy of the original string to butcher
         let mut stencil = string.as_ref().to_string();
@@ -109,7 +136,8 @@ impl NodeSet {
         Ok(Self {
             set,
             current_iter_index: None,
-        })
+        }
+        .optimize())
     }
 }
 
@@ -171,6 +199,20 @@ fn test_nodeset_creation() {
         nodeset,
         NodeSet {
             set: vec![node, gpu, apu],
+            current_iter_index: None,
+        }
+    );
+}
+
+#[test]
+fn test_nodeset_creation_optimize() {
+    let nodeset = NodeSet::new("node[1-10],gpu-node[1-20/2],node[5-20]").unwrap();
+    let node = Node::new("node[1-20]").unwrap();
+    let gpu = Node::new("gpu-node[1-20/2]").unwrap();
+    assert_eq!(
+        nodeset,
+        NodeSet {
+            set: vec![node, gpu],
             current_iter_index: None,
         }
     );

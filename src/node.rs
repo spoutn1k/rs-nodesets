@@ -208,6 +208,29 @@ impl Node {
         }
     }
 
+    /// Union of Node with an other Node
+    pub fn union(&self, other: &Self) -> Result<Self, Box<dyn Error>> {
+        let mut ns_sets: Vec<RangeSet> = Vec::new();
+        let mut values: Vec<(u32, usize)> = Vec::new();
+
+        if self.name != other.name {
+            return Err("Cannot calculate the union of different node ranges !".into());
+        }
+
+        for (i, rs_a) in self.sets.iter().enumerate() {
+            let rs_b: &RangeSet = &other.sets[i];
+            ns_sets.push(rs_a.union(rs_b));
+            values.push((0, 0));
+        }
+
+        Ok(Node {
+            name: self.name.to_string(),
+            sets: ns_sets,
+            values,
+            first: false,
+        })
+    }
+
     /* Captures with regex all possible (and non overlapping) rangeset in the node name
      * for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
      * It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2
