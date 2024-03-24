@@ -25,7 +25,6 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
-use std::fmt::Write;
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -162,22 +161,15 @@ impl Node {
         self.sets.is_empty() && self.name.is_empty()
     }
 
-    /// Transforms a nodeset (String) into a string
-    /// by expanding the created Node structure.
-    pub fn expand(&self, separator: &str) -> Result<String, Box<dyn Error>> {
-        // This is a way to do a clone or a copy as we can not iterate
-        // over self for now.
-        let node: Node = Node::new(&self.to_string())?;
-        let len: usize = node.len().try_into().unwrap();
-        let mut to_return = String::new();
-        for (i, n) in node.enumerate() {
-            if i == len - 1 {
-                write!(&mut to_return, "{n}").unwrap();
-            } else {
-                write!(&mut to_return, "{n}{separator}").unwrap();
-            }
-        }
-        Ok(to_return)
+    /// Transforms a nodeset (String) into a string by expanding the created Node structure.
+    pub fn expand<S: AsRef<str>>(&self, separator: S) -> Result<String, Box<dyn Error>> {
+        #[rustfmt::skip]
+        let out = Node::new(&self.to_string())?
+            .into_iter()
+            .collect::<Vec<String>>()
+            .join(separator.as_ref());
+
+        Ok(out)
     }
 
     /// Intersection of self Node with an other Node :
@@ -235,10 +227,10 @@ impl Node {
      * for instance rack[1-8]-node[1-42] should return 1-8 and 1-42 as rangeset
      * It will capture mixed types of rangesets ie: rack1-node[1-42]-cpu2
      */
-    pub fn capture_with_regex(nodename: &str) -> Result<(String, Vec<String>), NodeErrorType> {
+    pub fn capture_with_regex<S: AsRef<str>>(nodename: S) -> Result<(String, Vec<String>), NodeErrorType> {
         let mut rangesets: Vec<String> = Vec::new();
-        let mut name = nodename.to_string();
-        for capture in RE.captures_iter(nodename) {
+        let mut name = nodename.as_ref().to_string();
+        for capture in RE.captures_iter(nodename.as_ref()) {
             match capture.get(1) {
                 Some(text) => rangesets.push(text.as_str().to_string()),
                 None => {
@@ -249,19 +241,18 @@ impl Node {
             };
         }
         if !rangesets.is_empty() {
-            name = RE.replace_all(nodename, "{}").to_string();
+            name = RE.replace_all(nodename.as_ref(), "{}").to_string();
         }
         // name that still contains these characters indicates that the nodename is malformed.
         if name.contains('[') || name.contains(']') || name.contains('/') {
             return Err(NodeErrorType::Regular(ErrorKind::RegexErrorMatch(name)));
         }
-        //println!("name: {name}");
 
         Ok((name, rangesets))
     }
 
     /// Node examples: "node[1-5/2]" or "rack[1,3-5,89]" or "cpu[1-2]core[1-64]" or "node01"
-    pub fn new(str: &str) -> Result<Node, NodeErrorType> {
+    pub fn new<S: AsRef<str>>(str: S) -> Result<Node, NodeErrorType> {
         let (name, rangesets) = Node::capture_with_regex(str)?;
         let mut sets: Vec<RangeSet> = Vec::new();
         let mut values: Vec<(u32, usize)> = Vec::new();

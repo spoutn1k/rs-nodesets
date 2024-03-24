@@ -42,16 +42,17 @@ impl NodeSet {
         self.set.is_empty()
     }
 
-    /// Transforms a nodeset (String) into a string by expanding the Node
-    /// structures.
-    pub fn expand(&self, separator: &str) -> Result<String, Box<dyn Error>> {
-        #[rustfmt::skip]
-        let full_output = self.set.iter()
-            .map(|node| node.expand(separator))
-            .collect::<Result<Vec<String>, Box<dyn Error>>>()?
-            .join(separator);
+    /// Transforms a nodeset (String) into a string by expanding the Node structures
+    pub fn expand<S: AsRef<str>>(&self, separator: S) -> Result<String, Box<dyn Error>> {
+        let sep = separator.as_ref();
 
-        Ok(full_output)
+        #[rustfmt::skip]
+        let all = self.set.iter()
+            .map(|n| n.expand(sep))
+            .collect::<Result<Vec<_>, _>>()?
+            .join(sep);
+
+        Ok(all)
     }
 
     /// Intersection of NodeSet with an other NodeSet.
