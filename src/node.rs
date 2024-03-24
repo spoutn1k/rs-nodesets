@@ -142,20 +142,13 @@ lazy_static! {
 impl Node {
     /// Counts the number of elements in Node's definition.
     pub fn len(&self) -> u32 {
-        if self.sets.is_empty() {
-            if self.name.is_empty() {
-                0
-            } else {
-                1
-            }
-        } else {
-            let mut total = 1;
-            for r in self.sets.iter() {
-                total *= r.len();
-            }
-            total
+        match (self.sets.is_empty(), self.name.is_empty()) {
+            (true, true) => 0,
+            (true, false) => 1,
+            _ => self.sets.iter().map(|r| r.len()).product(),
         }
     }
+
     /// Tells whether a Node is empty or not.
     pub fn is_empty(&self) -> bool {
         self.sets.is_empty() && self.name.is_empty()
