@@ -73,10 +73,28 @@ impl NodeSet {
         }
     }
 
+    /// Union of two NodeSets
+    pub fn union(&self, other: &Self) -> Self {
+        // Add all node definitions to the internal vec and optimize it all
+        let mut set = self.set.clone();
+        set.extend(other.set.clone());
+
+        Self {
+            set,
+            current_iter_index: None,
+        }
+        .optimize()
+    }
+
+    /// This method will merge the redundant node definitions in the set.
+    /// If the set has been defined as `node[1-10],gpu[1-10],node[11-20]`, this will go through the
+    /// set and merge the two `nodeX` definitions into `node[1-20],gpu[1-10]`
     pub fn optimize(&self) -> Self {
         let mut optimized_set: Vec<Node> = vec![];
 
         for node in &self.set {
+            // name is a private field of node, so we attempt to union every node, while keeping
+            // track of where the merge was successful
             #[rustfmt::skip]
             let matches: Vec<(usize, Result<_, _>)> = optimized_set.iter()
                 .enumerate()
@@ -84,6 +102,8 @@ impl NodeSet {
                 .filter(|(_, res)| res.is_ok())
                 .collect();
 
+            // Because we start from an empty vec, either the node has a match and gets merged or
+            // it does not and gets added to the optimized set
             match matches.len() {
                 0 => optimized_set.push(node.clone()),
                 1 => {
@@ -222,6 +242,13 @@ fn test_nodeset_creation_optimize() {
 fn test_nodeset_expansion() {
     let nodeset = NodeSet::new("node[1-2],gpu-node[1-4/2],apu-node[4]").unwrap();
     assert_eq!(nodeset.expand(",").unwrap(), "node1,node2,gpu-node1,gpu-node3,apu-node4".to_string());
+}
+
+#[test]
+fn test_nodeset_union() {
+    let a = NodeSet::new("node[1-50],gpu-node[1-20/5],apu-node[1-1000]").unwrap();
+    let b = NodeSet::new("node[50-100],gpu-node[1-20/10],apu-node[500]").unwrap();
+    assert_eq!(format!("{}", a.union(&b)), "node[1-100],gpu-node[1-16/5],apu-node[1-1000]".to_string());
 }
 
 #[test]
