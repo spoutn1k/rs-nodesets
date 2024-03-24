@@ -84,7 +84,7 @@ fn count(count: &Count) {
         let node = match NodeSet::new(node_str) {
             Ok(n) => n,
             Err(e) => {
-                println!("Error: {e}");
+                eprintln!("Error: {e}");
                 exit(1);
             }
         };
@@ -109,7 +109,7 @@ fn expand(expand: &Expand) -> Result<(), Box<dyn Error>> {
         };
         match node.expand(format!("{separator}").as_str()) {
             Ok(s) => println!("{s}"),
-            Err(e) => println!("Error while expanding nodeset {node}: {e}"),
+            Err(e) => eprintln!("Error while expanding nodeset {node}: {e}"),
         };
     }
     Ok(())
@@ -120,7 +120,7 @@ fn fold(fold: &Fold) {
         let node = match NodeSet::new(node_str) {
             Ok(n) => n,
             Err(e) => {
-                println!("Error: {e}");
+                eprintln!("Error: {e}");
                 exit(1);
             }
         };
@@ -137,7 +137,7 @@ fn main() {
         }
         Commands::Expand(e) => {
             if let Err(e) = expand(e) {
-                println!("Error: {e}");
+                eprintln!("Error: {e}");
                 exit(1);
             }
         }
